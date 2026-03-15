@@ -1,0 +1,51 @@
+﻿@model ClinicaMedica.Web.ViewModels.Pacientes.PacienteFormViewModel
+
+@{
+    var readOnly = Model.ModoSomenteLeitura ? "readonly" : null;
+    var disabled = Model.ModoSomenteLeitura ? "disabled" : null;
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="mb-3">
+    <label asp-for="Nome" class="form-label"></label>
+    <input asp-for="Nome" class="form-control" readonly="@readOnly" />
+    <span asp-validation-for="Nome" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Cpf" class="form-label"></label>
+    <input asp-for="Cpf" class="form-control" readonly="@readOnly" />
+    <span asp-validation-for="Cpf" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Telefone" class="form-label"></label>
+    <input asp-for="Telefone" class="form-control" readonly="@readOnly" />
+    <span asp-validation-for="Telefone" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Email" class="form-label"></label>
+    <input asp-for="Email" class="form-control" readonly="@readOnly" />
+    <span asp-validation-for="Email" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="DataNascimento" class="form-label"></label>
+    <input asp-for="DataNascimento" class="form-control" type="date" readonly="@readOnly" />
+    <span asp-validation-for="DataNascimento" class="text-danger"></span>
+</div>
+
+<div class="form-check mb-3">
+    <input asp-for="Ativo" class="form-check-input" disabled="@disabled" />
+    <label asp-for="Ativo" class="form-check-label"></label>
+</div>
+
+@if (Model.Id > 0)
+{
+    <div class="mb-3">
+        <label asp-for="DataCadastro" class="form-label"></label>
+        <input asp-for="DataCadastro" class="form-control" readonly />
+    </div>
+}

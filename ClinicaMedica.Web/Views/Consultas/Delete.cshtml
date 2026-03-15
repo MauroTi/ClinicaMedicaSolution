@@ -1,0 +1,23 @@
+﻿@model ClinicaMedica.Web.ViewModels.Consultas.ConsultaFormViewModel
+
+@{
+    ViewData["Title"] = "Excluir Consulta";
+}
+
+<div class="container mt-4">
+    <h2>Excluir Consulta</h2>
+
+    <div class="alert alert-warning">
+        Tem certeza que deseja excluir esta consulta?
+    </div>
+
+    <div class="mt-3">
+        <partial name="_Form" model="Model" />
+    </div>
+
+    <form asp-action="Delete" method="post" class="mt-3">
+        <input asp-for="Id" type="hidden" />
+        <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

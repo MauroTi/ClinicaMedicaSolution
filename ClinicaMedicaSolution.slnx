@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ClinicaMedica.Consumidor/ClinicaMedica.Consumidor.csproj" />
+  <Project Path="ClinicaMedica.Web/ClinicaMedica.Web.csproj" />
+</Solution>

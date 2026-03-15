@@ -1,0 +1,57 @@
+﻿@model ClinicaMedica.Web.ViewModels.Consultas.ConsultaFormViewModel
+
+@{
+    var isReadOnly = Model.ModoSomenteLeitura;
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="mb-3">
+    <label asp-for="MedicoId" class="form-label"></label>
+    <select asp-for="MedicoId" asp-items="Model.Medicos" class="form-select" disabled="@isReadOnly">
+        <option value="">Selecione...</option>
+    </select>
+    <span asp-validation-for="MedicoId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="PacienteId" class="form-label"></label>
+    <select asp-for="PacienteId" asp-items="Model.Pacientes" class="form-select" disabled="@isReadOnly">
+        <option value="">Selecione...</option>
+    </select>
+    <span asp-validation-for="PacienteId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="DataHoraConsulta" class="form-label"></label>
+    <input asp-for="DataHoraConsulta" class="form-control" type="datetime-local" readonly="@(isReadOnly ? "readonly" : null)" />
+    <span asp-validation-for="DataHoraConsulta" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Valor" class="form-label"></label>
+    <input asp-for="Valor" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" />
+    <span asp-validation-for="Valor" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Status" class="form-label"></label>
+    <select asp-for="Status" asp-items="Model.StatusDisponiveis" class="form-select" disabled="@isReadOnly">
+        <option value="">Selecione...</option>
+    </select>
+    <span asp-validation-for="Status" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Observacoes" class="form-label"></label>
+    <textarea asp-for="Observacoes" class="form-control" rows="4" readonly="@(isReadOnly ? "readonly" : null)"></textarea>
+    <span asp-validation-for="Observacoes" class="text-danger"></span>
+</div>
+
+@if (Model.Id > 0)
+{
+    <div class="mb-3">
+        <label asp-for="DataCadastro" class="form-label"></label>
+        <input asp-for="DataCadastro" class="form-control" readonly />
+    </div>
+}

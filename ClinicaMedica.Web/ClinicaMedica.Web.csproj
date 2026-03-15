@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ViewModels\Consultas\**" />
+    <Content Remove="ViewModels\Consultas\**" />
+    <EmbeddedResource Remove="ViewModels\Consultas\**" />
+    <None Remove="ViewModels\Consultas\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="ViewModels\Consultas\ConsultaCreateViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaDetailsViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaEditViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaFormViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaIndexViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaItemViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaListItemViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\ConsultaListViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\MedicoOptionViewModel.cs" />
+    <Compile Include="ViewModels\Consultas\PacienteOptionViewModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.72" />
+    <PackageReference Include="MySql.Data" Version="9.6.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
+  </ItemGroup>
+
+</Project>
