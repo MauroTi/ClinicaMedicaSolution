@@ -1,8 +1,10 @@
-﻿namespace ClinicaMedica.Web.ViewModels.Pacientes
+﻿using System.Collections.Generic;
+
+namespace ClinicaMedica.Web.ViewModels.Pacientes
 {
     public class PacienteIndexViewModel
     {
-        public IEnumerable<ClinicaMedica.Web.Models.Paciente> Pacientes { get; set; }
-            = new List<ClinicaMedica.Web.Models.Paciente>();
+        // Use o namespace completo para evitar conflito com o namespace Paciente
+        public List<ClinicaMedica.Web.Models.Paciente> Pacientes { get; set; } = new List<ClinicaMedica.Web.Models.Paciente>();
     }
 }

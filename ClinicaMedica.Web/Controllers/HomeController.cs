@@ -6,7 +6,7 @@ namespace ClinicaMedica.Web.Controllers
     {
         public IActionResult Index()
         {
-            return RedirectToAction("Index", "Dashboard");
+            return View();
         }
     }
 }

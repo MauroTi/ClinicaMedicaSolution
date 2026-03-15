@@ -15,6 +15,7 @@ namespace ClinicaMedica.Web.Controllers.Api
             _medicoService = medicoService;
         }
 
+        // GET: api/Medicos
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -22,6 +23,7 @@ namespace ClinicaMedica.Web.Controllers.Api
             return Ok(medicos);
         }
 
+        // GET: api/Medicos/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -32,17 +34,20 @@ namespace ClinicaMedica.Web.Controllers.Api
             return Ok(medico);
         }
 
+        // POST: api/Medicos
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Medico model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            await _medicoService.AdicionarAsync(model);
+            var id = await _medicoService.AdicionarAsync(model);
 
-            return Ok(new { Mensagem = "Médico cadastrado com sucesso." });
+            // Retorna CreatedAtAction com o ID do médico criado
+            return CreatedAtAction(nameof(Get), new { id }, new { Mensagem = "Médico cadastrado com sucesso." });
         }
 
+        // PUT: api/Medicos/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] Medico model)
         {
@@ -52,14 +57,19 @@ namespace ClinicaMedica.Web.Controllers.Api
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var atualizado = await _medicoService.AtualizarAsync(model);
+            // Verifica se o médico existe antes de atualizar
+            var existente = await _medicoService.ObterPorIdAsync(id);
+            if (existente == null)
+                return NotFound(new { Mensagem = "Médico não encontrado para atualização." });
 
+            var atualizado = await _medicoService.AtualizarAsync(model);
             if (!atualizado)
                 return BadRequest(new { Mensagem = "Não foi possível atualizar o médico." });
 
             return Ok(new { Mensagem = "Médico atualizado com sucesso." });
         }
 
+        // DELETE: api/Medicos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

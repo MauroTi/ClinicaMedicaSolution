@@ -12,5 +12,6 @@ namespace ClinicaMedica.Web.Daos.Interfaces
         Task<bool> ExcluirAsync(int id);
         IEnumerable<Paciente> ObterTodos();
         Paciente? ObterPorId(int id);
+        Task<bool> ExisteCpfAsync(string cpf);
     }
 }

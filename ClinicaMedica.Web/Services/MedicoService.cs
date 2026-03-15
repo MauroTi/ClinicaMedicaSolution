@@ -1,9 +1,13 @@
 ﻿using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Models;
+using ClinicaMedica.Web.Services.Interfaces;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ClinicaMedica.Web.Services
 {
-    public class MedicoService
+    public class MedicoService : IMedicoService
     {
         private readonly IMedicoDao _medicoDao;
 
@@ -12,14 +16,32 @@ namespace ClinicaMedica.Web.Services
             _medicoDao = medicoDao;
         }
 
-        public IEnumerable<Medico> ObterTodos()
+        public Task<IEnumerable<Medico>> ObterTodosAsync()
         {
-            return _medicoDao.ObterTodos();
+            var medicos = _medicoDao.ObterTodos();
+            return Task.FromResult(medicos);
         }
 
-        public Medico? ObterPorId(int id)
+        public Task<Medico?> ObterPorIdAsync(int id)
         {
-            return _medicoDao.ObterPorId(id);
+            var medico = _medicoDao.ObterPorId(id);
+            return Task.FromResult(medico);
+        }
+
+        public async Task<int> AdicionarAsync(Medico medico)
+        {
+            await _medicoDao.AdicionarAsync(medico);
+            return medico.Id;
+        }
+
+        public async Task<bool> AtualizarAsync(Medico medico)
+        {
+            return await _medicoDao.AtualizarAsync(medico);
+        }
+
+        public async Task<bool> ExcluirAsync(int id)
+        {
+            return await _medicoDao.ExcluirAsync(id);
         }
     }
 }

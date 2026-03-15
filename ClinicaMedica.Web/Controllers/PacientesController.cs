@@ -16,8 +16,16 @@ namespace ClinicaMedica.Web.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var pacientes = await _pacienteService.ObterTodosAsync();
-            return View(pacientes);
+            // Chama o serviço assíncrono
+            IEnumerable<Paciente> pacientesEnumerable = await _pacienteService.ObterTodosAsync();
+
+            // Converte para List e coloca no ViewModel
+            var viewModel = new PacienteIndexViewModel
+            {
+                Pacientes = pacientesEnumerable.ToList()
+            };
+
+            return View(viewModel); // Passa o ViewModel correto
         }
 
         public IActionResult Create()
@@ -25,7 +33,8 @@ namespace ClinicaMedica.Web.Controllers
             return View(new PacienteFormViewModel
             {
                 DataNascimento = DateTime.Today,
-                Ativo = true
+                Ativo = true,
+                Cpf = "00000000000" // CPF padrão temporário ou para testes
             });
         }
 
@@ -33,6 +42,17 @@ namespace ClinicaMedica.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PacienteFormViewModel vm)
         {
+            if (string.IsNullOrWhiteSpace(vm.Cpf))
+            {
+                ModelState.AddModelError("Cpf", "O CPF é obrigatório.");
+            }
+
+            // ✅ valida CPF duplicado
+            if (await _pacienteService.ExisteCpfAsync(vm.Cpf))
+            {
+                ModelState.AddModelError("Cpf", "Este CPF já está cadastrado.");
+            }
+
             if (!ModelState.IsValid)
                 return View(vm);
 

@@ -1,31 +1,39 @@
 ﻿// Path: Controllers/DashboardController.cs
+using ClinicaMedica.Web.Services;
 using ClinicaMedica.Web.ViewModels.Dashboard;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-public class DashboardController : Controller
+namespace ClinicaMedica.Web.Controllers
 {
-    private readonly DashboardService _dashboardService;
-
-    public DashboardController(DashboardService dashboardService)
+    public class DashboardController : Controller
     {
-        _dashboardService = dashboardService;
-    }
+        private readonly DashboardService _dashboardService;
 
-    public IActionResult Index()
-    {
-        // Obtém os dados do serviço
-        var resumo = _dashboardService.ObterDadosResumo();
-
-        // Mapeia para o ViewModel específico da View
-        var viewModel = new DashboardViewModel
+        public DashboardController(DashboardService dashboardService)
         {
-            TotalMedicos = resumo.TotalMedicos,
-            TotalPacientes = resumo.TotalPacientes,
-            TotalConsultas = resumo.TotalConsultas,
-            ReceitaTotal = resumo.ReceitaTotal,
-            ConsultasAgendadas = resumo.ConsultasAgendadas,
-        };
+            _dashboardService = dashboardService;
+        }
 
-        return View(viewModel);
+        // Método assíncrono para obter dados do dashboard
+        public async Task<IActionResult> Index()
+        {
+            // Obtém os dados do serviço de forma assíncrona
+            var resumo = await _dashboardService.ObterDadosResumoAsync();
+
+            // Mapeia diretamente para o ViewModel da View
+            var viewModel = new DashboardViewModel
+            {
+                TotalMedicos = resumo.TotalMedicos,
+                TotalPacientes = resumo.TotalPacientes,
+                TotalConsultas = resumo.TotalConsultas,
+                ReceitaTotal = resumo.ReceitaTotal,
+                ConsultasAgendadas = resumo.ConsultasAgendadas,
+                ConsultasRealizadas = resumo.ConsultasRealizadas,
+                ConsultasCanceladas = resumo.ConsultasCanceladas
+            };
+
+            return View(viewModel);
+        }
     }
 }

@@ -1,7 +1,8 @@
-﻿using System;
-using System.Data;
+﻿using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Data;
-using ClinicaMedica.Web.Daos.Interfaces;
+using System.Data;
+using System.Threading.Tasks;
+using Dapper;
 
 namespace ClinicaMedica.Web.Daos
 {
@@ -14,49 +15,37 @@ namespace ClinicaMedica.Web.Daos
             _dbConnectionFactory = dbConnectionFactory;
         }
 
-        public int ObterTotalMedicos()
+        public async Task<int> ObterTotalMedicosAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            db.Open();
-            using var cmd = db.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(*) FROM medicos WHERE Ativo = 1;";
-            return Convert.ToInt32(cmd.ExecuteScalar());
+            return await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM medicos");
         }
 
-        public int ObterTotalPacientes()
+        public async Task<int> ObterTotalPacientesAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            db.Open();
-            using var cmd = db.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(*) FROM pacientes;";
-            return Convert.ToInt32(cmd.ExecuteScalar());
+            return await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM pacientes");
         }
 
-        public int ObterTotalConsultas()
+        public async Task<int> ObterTotalConsultasAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            db.Open();
-            using var cmd = db.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(*) FROM consultas;";
-            return Convert.ToInt32(cmd.ExecuteScalar());
+            return await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM consultas");
         }
 
-        public int ConsultasAgendadas()
+        public async Task<decimal> ObterReceitaTotalAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            db.Open();
-            using var cmd = db.CreateCommand();
-            cmd.CommandText = "SELECT COUNT(*) FROM consultas;";
-            return Convert.ToInt32(cmd.ExecuteScalar());
+            return await db.ExecuteScalarAsync<decimal>("SELECT IFNULL(SUM(Valor),0) FROM consultas WHERE Status='Realizada'");
         }
 
-        public decimal ObterReceitaTotal()
+        public async Task<int> ConsultasPorStatusAsync(string status)
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            db.Open();
-            using var cmd = db.CreateCommand();
-            cmd.CommandText = "SELECT IFNULL(SUM(Valor),0) FROM consultas WHERE Status='Confirmada';";
-            return Convert.ToDecimal(cmd.ExecuteScalar());
+            return await db.ExecuteScalarAsync<int>(
+                "SELECT COUNT(*) FROM consultas WHERE Status = @Status",
+                new { Status = status }
+            );
         }
     }
 }

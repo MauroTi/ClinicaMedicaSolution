@@ -6,5 +6,8 @@ namespace ClinicaMedica.Web.Daos.Interfaces
     {
         IEnumerable<Medico> ObterTodos();
         Medico? ObterPorId(int id);
+        Task AdicionarAsync(Medico medico);
+        Task<bool> AtualizarAsync(Medico medico);
+        Task<bool> ExcluirAsync(int id);
     }
 }

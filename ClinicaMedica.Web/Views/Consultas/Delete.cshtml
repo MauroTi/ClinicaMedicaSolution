@@ -16,6 +16,7 @@
     </div>
 
     <form asp-action="Delete" method="post" class="mt-3">
+        @Html.AntiForgeryToken()
         <input asp-for="Id" type="hidden" />
         <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
         <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

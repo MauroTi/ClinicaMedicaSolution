@@ -5,6 +5,8 @@ using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Models.DTOs;
 using Dapper;
 using System.Data;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ClinicaMedica.Web.Daos
 {
@@ -17,25 +19,37 @@ namespace ClinicaMedica.Web.Daos
             _dbConnection = dbFactory.CreateConnection();
         }
 
-        public IEnumerable<Consulta> ObterTodos()
+        // Obter todas as consultas (simples)
+        public async Task<IEnumerable<Consulta>> ObterTodosAsync()
         {
             string sql = "SELECT * FROM consultas";
-            return _dbConnection.Query<Consulta>(sql);
+            return await _dbConnection.QueryAsync<Consulta>(sql);
         }
 
-        public Consulta? ObterPorId(int id)
+        // Obter consulta por ID (assíncrono)
+        public async Task<Consulta?> ObterPorIdAsync(int id)
         {
             string sql = "SELECT * FROM consultas WHERE Id = @Id";
-            return _dbConnection.QueryFirstOrDefault<Consulta>(sql, new { Id = id });
+            return await _dbConnection.QueryFirstOrDefaultAsync<Consulta>(sql, new { Id = id });
         }
 
-        public async Task<bool> ExcluirAsync(int id)
+        // Obter todas as consultas com detalhes (DTO)
+        public async Task<IEnumerable<ConsultaDto>> ObterTodosDetalhadosAsync()
         {
-            string sql = "DELETE FROM consultas WHERE Id = @Id";
-            var affectedRows = await _dbConnection.ExecuteAsync(sql, new { Id = id });
-            return affectedRows > 0;
+            string sql = @"
+                SELECT c.Id, c.MedicoId, c.PacienteId, c.DataHoraConsulta, c.Valor, c.Status, c.Observacoes, c.DataCadastro,
+                       m.Nome AS MedicoNome, m.Especialidade, m.Crm,
+                       p.Nome AS PacienteNome, p.Telefone, p.Email
+                FROM consultas c
+                INNER JOIN medicos m ON c.MedicoId = m.Id
+                INNER JOIN pacientes p ON c.PacienteId = p.Id
+            ";
+
+            var consultas = await _dbConnection.QueryAsync<ConsultaDto>(sql);
+            return consultas;
         }
 
+        // Criar nova consulta
         public async Task CriarAsync(Consulta model)
         {
             string sql = @"
@@ -44,27 +58,42 @@ namespace ClinicaMedica.Web.Daos
             await _dbConnection.ExecuteAsync(sql, model);
         }
 
-        public Task<IEnumerable<Consulta>> ObterTodosAsync()
+        // Excluir consulta
+        public async Task<bool> ExcluirAsync(int id)
         {
-            throw new NotImplementedException();
+            string sql = "DELETE FROM consultas WHERE Id = @Id";
+            var affectedRows = await _dbConnection.ExecuteAsync(sql, new { Id = id });
+            return affectedRows > 0;
         }
 
-        public Task<IEnumerable<ConsultaDto>> ObterTodosDetalhadosAsync()
+        // Atualizar consulta
+        public async Task<bool> AtualizarAsync(Consulta consulta)
         {
-            throw new NotImplementedException();
+            string sql = @"
+                UPDATE consultas
+                SET MedicoId = @MedicoId,
+                    PacienteId = @PacienteId,
+                    DataHoraConsulta = @DataHoraConsulta,
+                    Valor = @Valor,
+                    Status = @Status,
+                    Observacoes = @Observacoes
+                WHERE Id = @Id";
+            var affectedRows = await _dbConnection.ExecuteAsync(sql, consulta);
+            return affectedRows > 0;
         }
 
-        public Task<Consulta?> ObterPorIdAsync(int id)
+        // Inserir consulta e retornar ID
+        public async Task<int> InserirAsync(Consulta consulta)
         {
-            throw new NotImplementedException();
+            string sql = @"
+                INSERT INTO consultas (MedicoId, PacienteId, DataHoraConsulta, Valor, Status, Observacoes, DataCadastro)
+                VALUES (@MedicoId, @PacienteId, @DataHoraConsulta, @Valor, @Status, @Observacoes, @DataCadastro);
+                SELECT LAST_INSERT_ID();";
+            var id = await _dbConnection.ExecuteScalarAsync<int>(sql, consulta);
+            return id;
         }
 
-        public Task<int> InserirAsync(Consulta consulta)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> AtualizarAsync(Consulta consulta)
+        IEnumerable<Consulta> IConsultaDao.ObterTodos()
         {
             throw new NotImplementedException();
         }

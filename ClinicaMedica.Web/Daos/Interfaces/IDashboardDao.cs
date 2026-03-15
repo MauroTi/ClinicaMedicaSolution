@@ -1,11 +1,13 @@
-﻿namespace ClinicaMedica.Web.Daos.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace ClinicaMedica.Web.Daos.Interfaces
 {
     public interface IDashboardDao
     {
-        int ObterTotalMedicos();
-        int ObterTotalPacientes();
-        int ObterTotalConsultas();
-        decimal ObterReceitaTotal();
-        int ConsultasAgendadas(); // apenas a assinatura
+        Task<int> ObterTotalMedicosAsync();
+        Task<int> ObterTotalPacientesAsync();
+        Task<int> ObterTotalConsultasAsync();
+        Task<decimal> ObterReceitaTotalAsync();
+        Task<int> ConsultasPorStatusAsync(string status);
     }
 }

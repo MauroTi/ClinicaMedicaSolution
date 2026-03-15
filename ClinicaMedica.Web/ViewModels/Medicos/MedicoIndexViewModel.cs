@@ -1,4 +1,7 @@
-﻿namespace ClinicaMedica.Web.ViewModels.Medicos
+﻿using ClinicaMedica.Web.Models;
+using System.Collections.Generic;
+
+namespace ClinicaMedica.Web.ViewModels.Medicos
 {
     public class MedicoIndexViewModel
     {

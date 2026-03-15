@@ -11,6 +11,10 @@
     <select asp-for="MedicoId" asp-items="Model.Medicos" class="form-select" disabled="@isReadOnly">
         <option value="">Selecione...</option>
     </select>
+    @if (isReadOnly)
+    {
+        <input type="hidden" asp-for="MedicoId" />
+    }
     <span asp-validation-for="MedicoId" class="text-danger"></span>
 </div>
 
@@ -19,6 +23,10 @@
     <select asp-for="PacienteId" asp-items="Model.Pacientes" class="form-select" disabled="@isReadOnly">
         <option value="">Selecione...</option>
     </select>
+    @if (isReadOnly)
+    {
+        <input type="hidden" asp-for="PacienteId" />
+    }
     <span asp-validation-for="PacienteId" class="text-danger"></span>
 </div>
 
@@ -30,8 +38,13 @@
 
 <div class="mb-3">
     <label asp-for="Valor" class="form-label"></label>
-    <input asp-for="Valor" class="form-control" readonly="@(isReadOnly ? "readonly" : null)" />
-    <span asp-validation-for="Valor" class="text-danger"></span>
+    <input name="Valor"
+           id="Valor"
+           value="@Model.Valor.ToString("N2")"
+           class="form-control"
+           type="text"
+           readonly="@(isReadOnly ? "readonly" : null)" />
+    <span class="text-danger">@Html.ValidationMessage("Valor")</span>
 </div>
 
 <div class="mb-3">
@@ -39,6 +52,10 @@
     <select asp-for="Status" asp-items="Model.StatusDisponiveis" class="form-select" disabled="@isReadOnly">
         <option value="">Selecione...</option>
     </select>
+    @if (isReadOnly)
+    {
+        <input type="hidden" asp-for="Status" />
+    }
     <span asp-validation-for="Status" class="text-danger"></span>
 </div>
 
@@ -54,4 +71,8 @@
         <label asp-for="DataCadastro" class="form-label"></label>
         <input asp-for="DataCadastro" class="form-control" readonly />
     </div>
+
+    <input type="hidden" asp-for="DataCadastro" />
 }
+
+<input type="hidden" asp-for="Id" />

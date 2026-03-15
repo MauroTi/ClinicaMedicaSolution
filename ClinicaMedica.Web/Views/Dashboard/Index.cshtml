@@ -1,5 +1,4 @@
-﻿
-@model ClinicaMedica.Web.ViewModels.Dashboard.DashboardViewModel
+﻿@model ClinicaMedica.Web.ViewModels.Dashboard.DashboardViewModel
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -41,6 +40,33 @@
                 <div class="card-body">
                     <h5 class="card-title">Agendadas</h5>
                     <p class="display-6">@Model.ConsultasAgendadas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mt-3">
+            <div class="card border-info shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Realizadas</h5>
+                    <p class="display-6">@Model.ConsultasRealizadas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mt-3">
+            <div class="card border-secondary shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Canceladas</h5>
+                    <p class="display-6">@Model.ConsultasCanceladas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mt-3">
+            <div class="card border-dark shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Receita Total</h5>
+                    <p class="display-6">@Model.ReceitaTotal.ToString("C")</p>
                 </div>
             </div>
         </div>

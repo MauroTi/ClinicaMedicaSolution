@@ -16,6 +16,7 @@
 <div class="mb-3">
     <label asp-for="Cpf" class="form-label"></label>
     <input asp-for="Cpf" class="form-control" readonly="@readOnly" />
+    <input type="hidden" asp-for="Cpf" /> <!-- garante que o valor será enviado -->
     <span asp-validation-for="Cpf" class="text-danger"></span>
 </div>
 
@@ -42,10 +43,4 @@
     <label asp-for="Ativo" class="form-check-label"></label>
 </div>
 
-@if (Model.Id > 0)
-{
-    <div class="mb-3">
-        <label asp-for="DataCadastro" class="form-label"></label>
-        <input asp-for="DataCadastro" class="form-control" readonly />
-    </div>
-}
+<input asp-for="DataCadastro" type="hidden" />

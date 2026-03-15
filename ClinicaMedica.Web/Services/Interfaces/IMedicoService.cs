@@ -1,4 +1,6 @@
 ﻿using ClinicaMedica.Web.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ClinicaMedica.Web.Services.Interfaces
 {

@@ -1,4 +1,6 @@
-﻿namespace ClinicaMedica.Web.ViewModels.Consultas
+﻿using ClinicaMedica.Web.Models.DTOs;
+
+namespace ClinicaMedica.Web.ViewModels.Consultas
 {
     public class ConsultaIndexViewModel
     {
@@ -10,6 +12,6 @@
         public string Status { get; set; } = string.Empty;
         public string Observacoes { get; set; } = string.Empty;
         public DateTime DataCadastro { get; set; }
-        public IEnumerable<ConsultaFormViewModel> Consultas { get; set; } = new List<ConsultaFormViewModel>();
+        public List<ConsultaDto> Consultas { get; set; } = new List<ConsultaDto>();
     }
 }

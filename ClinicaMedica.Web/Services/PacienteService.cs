@@ -1,9 +1,10 @@
 ﻿using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Models;
+using ClinicaMedica.Web.Services.Interfaces;
 
 namespace ClinicaMedica.Web.Services
 {
-    public class PacienteService
+    public class PacienteService : IPacienteService
     {
         private readonly IPacienteDao _pacienteDao;
 
@@ -13,34 +14,39 @@ namespace ClinicaMedica.Web.Services
         }
 
         // Obter todos os pacientes
-        public IEnumerable<Paciente> ObterTodos()
+        public Task<IEnumerable<Paciente>> ObterTodosAsync()
         {
-            return _pacienteDao.ObterTodos();
+            return Task.FromResult(_pacienteDao.ObterTodos());
         }
 
         // Obter paciente por ID
-        public Paciente? ObterPorId(int id)
+        public Task<Paciente?> ObterPorIdAsync(int id)
         {
-            return _pacienteDao.ObterPorId(id);
+            return Task.FromResult(_pacienteDao.ObterPorId(id));
         }
 
-        // Excluir paciente (retorna o paciente excluído ou null)
+        // Criar paciente
+        public async Task<int> AdicionarAsync(Paciente model)
+        {
+            await _pacienteDao.CriarAsync(model);
+            return model.Id; // assumindo que o DAO seta o Id após criar
+        }
+
+        // Editar paciente
+        public async Task<bool> AtualizarAsync(Paciente model)
+        {
+            return await _pacienteDao.EditarAsync(model);
+        }
+
+        // Excluir paciente
         public async Task<bool> ExcluirAsync(int id)
         {
             return await _pacienteDao.ExcluirAsync(id);
         }
 
-        // Criar paciente (agora PUBLIC e chamando o DAO real)
-        public async Task CriarAsync(Paciente model)
+        public async Task<bool> ExisteCpfAsync(string cpf)
         {
-            await _pacienteDao.CriarAsync(model);
+            return await _pacienteDao.ExisteCpfAsync(cpf);
         }
-
-        //Editar paciente
-        public async Task<bool> EditarAsync(Paciente model)
-        {
-            return await _pacienteDao.EditarAsync(model);
-        }
-
     }
 }
