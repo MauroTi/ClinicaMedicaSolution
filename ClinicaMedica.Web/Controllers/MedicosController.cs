@@ -1,7 +1,9 @@
-﻿using ClinicaMedica.Web.Models;
+﻿// Path: Controllers/MedicosController.cs
+using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
 using ClinicaMedica.Web.ViewModels.Medicos;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,32 +18,20 @@ namespace ClinicaMedica.Web.Controllers
             _medicoService = medicoService;
         }
 
-        // GET: /Medicos
         public async Task<IActionResult> Index()
         {
             var medicos = await _medicoService.ObterTodosAsync();
-
-            var viewModel = new MedicoIndexViewModel
-            {
-                Medicos = medicos.ToList()
-            };
-
-            return View(viewModel);
+            var vm = new MedicoIndexViewModel { Medicos = medicos.ToList() };
+            return View(vm);
         }
 
-        // GET: /Medicos/Create
-        public IActionResult Create()
-        {
-            return View(new MedicoFormViewModel());
-        }
+        public IActionResult Create() => View(new MedicoFormViewModel());
 
-        // POST: /Medicos/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(MedicoFormViewModel vm)
         {
-            if (!ModelState.IsValid)
-                return View(vm);
+            if (!ModelState.IsValid) return View(vm);
 
             var medico = new Medico
             {
@@ -51,20 +41,26 @@ namespace ClinicaMedica.Web.Controllers
                 Telefone = vm.Telefone,
                 Email = vm.Email,
                 Ativo = vm.Ativo,
-                DataCadastro = System.DateTime.Now
+                DataCadastro = DateTime.Now
             };
 
-            await _medicoService.AdicionarAsync(medico);
+            try
+            {
+                await _medicoService.AdicionarAsync(medico);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(vm);
+            }
 
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Medicos/Edit/{id}
         public async Task<IActionResult> Edit(int id)
         {
             var medico = await _medicoService.ObterPorIdAsync(id);
-            if (medico == null)
-                return NotFound();
+            if (medico == null) return NotFound();
 
             var vm = new MedicoFormViewModel
             {
@@ -81,13 +77,11 @@ namespace ClinicaMedica.Web.Controllers
             return View(vm);
         }
 
-        // POST: /Medicos/Edit/{id}
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(MedicoFormViewModel vm)
         {
-            if (!ModelState.IsValid)
-                return View(vm);
+            if (!ModelState.IsValid) return View(vm);
 
             var medico = new Medico
             {
@@ -101,42 +95,40 @@ namespace ClinicaMedica.Web.Controllers
                 DataCadastro = vm.DataCadastro
             };
 
-            bool sucesso = await _medicoService.AtualizarAsync(medico);
-            if (!sucesso)
-                return NotFound();
+            try
+            {
+                bool sucesso = await _medicoService.AtualizarAsync(medico);
+                if (!sucesso) ModelState.AddModelError("", "Erro ao atualizar o médico.");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(vm);
+            }
 
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Medicos/Details/{id}
         public async Task<IActionResult> Details(int id)
         {
             var medico = await _medicoService.ObterPorIdAsync(id);
-            if (medico == null)
-                return NotFound();
-
+            if (medico == null) return NotFound();
             return View(medico);
         }
 
-        // GET: /Medicos/Delete/{id}
         public async Task<IActionResult> Delete(int id)
         {
             var medico = await _medicoService.ObterPorIdAsync(id);
-            if (medico == null)
-                return NotFound();
-
+            if (medico == null) return NotFound();
             return View(medico);
         }
 
-        // POST: /Medicos/Delete/{id}
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             bool sucesso = await _medicoService.ExcluirAsync(id);
-            if (!sucesso)
-                return NotFound();
-
+            if (!sucesso) return NotFound();
             return RedirectToAction(nameof(Index));
         }
     }

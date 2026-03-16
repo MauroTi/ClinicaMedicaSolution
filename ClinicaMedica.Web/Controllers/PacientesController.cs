@@ -34,7 +34,7 @@ namespace ClinicaMedica.Web.Controllers
             {
                 DataNascimento = DateTime.Today,
                 Ativo = true,
-                Cpf = "00000000000" // CPF padrão temporário ou para testes
+
             });
         }
 

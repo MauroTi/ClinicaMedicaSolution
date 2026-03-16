@@ -1,11 +1,13 @@
-﻿using ClinicaMedica.Web.Models;
+﻿// Path: Controllers/Api/MedicosApiController.cs
+using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace ClinicaMedica.Web.Controllers.Api
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class MedicosApiController : ControllerBase
     {
         private readonly IMedicoService _medicoService;
@@ -15,70 +17,60 @@ namespace ClinicaMedica.Web.Controllers.Api
             _medicoService = medicoService;
         }
 
-        // GET: api/Medicos
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> GetAll()
         {
             var medicos = await _medicoService.ObterTodosAsync();
             return Ok(medicos);
         }
 
-        // GET: api/Medicos/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             var medico = await _medicoService.ObterPorIdAsync(id);
-            if (medico == null)
-                return NotFound(new { Mensagem = "Médico não encontrado." });
-
+            if (medico == null) return NotFound();
             return Ok(medico);
         }
 
-        // POST: api/Medicos
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Medico model)
+        public async Task<IActionResult> Create(Medico medico)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var id = await _medicoService.AdicionarAsync(model);
-
-            // Retorna CreatedAtAction com o ID do médico criado
-            return CreatedAtAction(nameof(Get), new { id }, new { Mensagem = "Médico cadastrado com sucesso." });
+            try
+            {
+                await _medicoService.AdicionarAsync(medico);
+                return CreatedAtAction(nameof(GetById), new { id = medico.Id }, medico);
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // PUT: api/Medicos/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] Medico model)
+        public async Task<IActionResult> Update(int id, Medico medico)
         {
-            if (id != model.Id)
-                return BadRequest(new { Mensagem = "ID da rota difere do ID do corpo." });
+            if (id != medico.Id) return BadRequest("ID inválido");
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Verifica se o médico existe antes de atualizar
-            var existente = await _medicoService.ObterPorIdAsync(id);
-            if (existente == null)
-                return NotFound(new { Mensagem = "Médico não encontrado para atualização." });
-
-            var atualizado = await _medicoService.AtualizarAsync(model);
-            if (!atualizado)
-                return BadRequest(new { Mensagem = "Não foi possível atualizar o médico." });
-
-            return Ok(new { Mensagem = "Médico atualizado com sucesso." });
+            try
+            {
+                bool sucesso = await _medicoService.AtualizarAsync(medico);
+                if (!sucesso) return NotFound();
+                return NoContent();
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // DELETE: api/Medicos/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var excluido = await _medicoService.ExcluirAsync(id);
-
-            if (!excluido)
-                return BadRequest(new { Mensagem = "Não foi possível excluir o médico." });
-
-            return Ok(new { Mensagem = "Médico excluído com sucesso." });
+            bool sucesso = await _medicoService.ExcluirAsync(id);
+            if (!sucesso) return NotFound();
+            return NoContent();
         }
     }
 }

@@ -1,8 +1,9 @@
-﻿using ClinicaMedica.Web.Daos.Interfaces;
+﻿// Path: Services/MedicoService.cs
+using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace ClinicaMedica.Web.Services
@@ -16,32 +17,37 @@ namespace ClinicaMedica.Web.Services
             _medicoDao = medicoDao;
         }
 
-        public Task<IEnumerable<Medico>> ObterTodosAsync()
+        public async Task<bool> AdicionarAsync(Medico medico)
         {
-            var medicos = _medicoDao.ObterTodos();
-            return Task.FromResult(medicos);
-        }
+            var existente = await _medicoDao.ObterPorCrmAsync(medico.Crm);
+            if (existente != null)
+                throw new Exception($"O CRM {medico.Crm} já está cadastrado.");
 
-        public Task<Medico?> ObterPorIdAsync(int id)
-        {
-            var medico = _medicoDao.ObterPorId(id);
-            return Task.FromResult(medico);
-        }
-
-        public async Task<int> AdicionarAsync(Medico medico)
-        {
-            await _medicoDao.AdicionarAsync(medico);
-            return medico.Id;
+            return await _medicoDao.AdicionarAsync(medico);
         }
 
         public async Task<bool> AtualizarAsync(Medico medico)
         {
+            var existente = await _medicoDao.ObterPorCrmAsync(medico.Crm);
+            if (existente != null && existente.Id != medico.Id)
+                throw new Exception($"O CRM {medico.Crm} já está cadastrado para outro médico.");
+
             return await _medicoDao.AtualizarAsync(medico);
         }
 
         public async Task<bool> ExcluirAsync(int id)
         {
             return await _medicoDao.ExcluirAsync(id);
+        }
+
+        public async Task<Medico> ObterPorIdAsync(int id)
+        {
+            return await _medicoDao.ObterPorId(id);
+        }
+
+        public async Task<IEnumerable<Medico>> ObterTodosAsync()
+        {
+            return await _medicoDao.ObterTodos();
         }
     }
 }
