@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ClinicaMedica.Web.Controllers.Api
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/pacientes")]
     public class PacientesApiController : ControllerBase
     {
         private readonly IPacienteService _pacienteService;
@@ -15,7 +15,7 @@ namespace ClinicaMedica.Web.Controllers.Api
             _pacienteService = pacienteService;
         }
 
-        // GET: api/Pacientes
+        // GET: api/pacientes
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -23,7 +23,7 @@ namespace ClinicaMedica.Web.Controllers.Api
             return Ok(pacientes);
         }
 
-        // GET: api/Pacientes/5
+        // GET: api/pacientes/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -35,19 +35,27 @@ namespace ClinicaMedica.Web.Controllers.Api
             return Ok(paciente);
         }
 
-        // POST: api/Pacientes
+        // POST: api/pacientes
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Paciente model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Se DataCadastro vier zerado, garante valor
+            if (model.DataCadastro == default)
+                model.DataCadastro = DateTime.Now;
+
             var id = await _pacienteService.AdicionarAsync(model);
 
-            return CreatedAtAction(nameof(Get), new { id }, new { Mensagem = "Paciente cadastrado com sucesso." });
+            return CreatedAtAction(nameof(Get), new { id }, new
+            {
+                Mensagem = "Paciente cadastrado com sucesso.",
+                Id = id
+            });
         }
 
-        // PUT: api/Pacientes/5
+        // PUT: api/pacientes/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] Paciente model)
         {
@@ -61,6 +69,10 @@ namespace ClinicaMedica.Web.Controllers.Api
             if (existente == null)
                 return NotFound(new { Mensagem = "Paciente não encontrado para atualizar." });
 
+            // Preserva DataCadastro se vier vazio
+            if (model.DataCadastro == default)
+                model.DataCadastro = existente.DataCadastro;
+
             var atualizado = await _pacienteService.AtualizarAsync(model);
             if (!atualizado)
                 return BadRequest(new { Mensagem = "Falha ao atualizar o paciente." });
@@ -68,7 +80,7 @@ namespace ClinicaMedica.Web.Controllers.Api
             return Ok(new { Mensagem = "Paciente atualizado com sucesso." });
         }
 
-        // DELETE: api/Pacientes/5
+        // DELETE: api/pacientes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

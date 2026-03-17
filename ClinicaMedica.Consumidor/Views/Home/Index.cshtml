@@ -1,8 +1,44 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model ClinicaMedica.Consumidor.ViewModels.HomeViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-4">
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-bold">Dashboard da Clínica Médica</h1>
+        <p class="text-muted">Visão geral do sistema</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary">Total de Médicos</h5>
+                    <h2 class="fw-bold">@Model.TotalMedicos</h2>
+                    <a asp-action="Medicos" class="btn btn-outline-primary mt-3">Ver Médicos</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">Total de Pacientes</h5>
+                    <h2 class="fw-bold">@Model.TotalPacientes</h2>
+                    <a asp-action="Pacientes" class="btn btn-outline-success mt-3">Ver Pacientes</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-3 h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">Total de Consultas</h5>
+                    <h2 class="fw-bold">@Model.TotalConsultas</h2>
+                    <a asp-action="Consultas" class="btn btn-outline-warning mt-3">Ver Consultas</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

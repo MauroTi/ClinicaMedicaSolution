@@ -1,0 +1,11 @@
+﻿@model ClinicaMedica.Consumidor.ViewModels.ConsultaViewModel
+
+<h2>Excluir Consulta</h2>
+
+<p>Tem certeza que deseja excluir a consulta de <strong>@Model.NomePaciente</strong> com o médico <strong>@Model.NomeMedico</strong> em <strong>@Model.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm")</strong>?</p>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

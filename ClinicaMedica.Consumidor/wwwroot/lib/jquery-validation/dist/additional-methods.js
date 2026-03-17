@@ -414,10 +414,10 @@ $.validator.addMethod( "cnpjBR", function( value, element ) {
 }, "Please specify a CNPJ value number." );
 
 /*
- * Brazillian CPF number (Cadastrado de Pessoas Físicas) is the equivalent of a Brazilian tax registration number.
- * CPF numbers have 11 digits in total: 9 numbers followed by 2 check numbers that are being used for validation.
+ * Brazillian Cpf number (Cadastrado de Pessoas Físicas) is the equivalent of a Brazilian tax registration number.
+ * Cpf numbers have 11 digits in total: 9 numbers followed by 2 check numbers that are being used for validation.
  */
-$.validator.addMethod( "cpfBR", function( value, element ) {
+$.validator.addMethod( "CpfBR", function( value, element ) {
 	"use strict";
 
 	if ( this.optional( element ) ) {
@@ -477,7 +477,7 @@ $.validator.addMethod( "cpfBR", function( value, element ) {
 	}
 	return false;
 
-}, "Please specify a valid CPF number." );
+}, "Please specify a valid Cpf number." );
 
 // https://jqueryvalidation.org/creditcard-method/
 // based on https://en.wikipedia.org/wiki/Luhn_algorithm

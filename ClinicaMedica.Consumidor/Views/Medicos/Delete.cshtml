@@ -1,0 +1,11 @@
+﻿@model ClinicaMedica.Consumidor.ViewModels.MedicoViewModel
+
+<h2>Excluir Médico</h2>
+
+<p>Tem certeza que deseja excluir o médico <strong>@Model.Nome</strong>?</p>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Excluir</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
