@@ -31,6 +31,13 @@
                                 <i class="bi bi-house-door"></i> Home
                             </a>
                         </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Medicos" ? "active" : "")"
+                                   asp-controller="Medicos" asp-action="Index">
+                                <i class="bi bi-person-badge"></i> Médicos
+                            </a>
+                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Pacientes" ? "active" : "")"
@@ -39,12 +46,6 @@
                             </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Medicos" ? "active" : "")"
-                                   asp-controller="Medicos" asp-action="Index">
-                                <i class="bi bi-person-badge"></i> Médicos
-                            </a>
-                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Consultas" ? "active" : "")"
@@ -74,11 +75,10 @@
             <span class="small">Frontend MVC consumindo API do ClinicaMedica.Web</span>
         </div>
     </footer>
-
+   
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

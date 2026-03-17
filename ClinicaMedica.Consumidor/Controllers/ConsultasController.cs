@@ -1,30 +1,29 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ClinicaMedica.Consumidor.Services;
-using ClinicaMedica.Consumidor.Models;
+﻿using ClinicaMedica.Consumidor.Models;
 using ClinicaMedica.Consumidor.ViewModels;
+using ClinicaMedica.Consumidor.Services;
+using Microsoft.AspNetCore.Mvc;
 
-namespace ClinicaMedica.Consumidor.Controllers
+public class ConsultasController : Controller
 {
-    public class ConsultasController : Controller
+    private readonly ApiService _apiService;
+
+    public ConsultasController(ApiService apiService)
     {
-        private readonly ConsultaService _service;
-        private readonly MedicoService _medicos;
-        private readonly PacienteService _pacientes;
+        _apiService = apiService;
+    }
 
-        public ConsultasController(ConsultaService service, MedicoService medicos, PacienteService pacientes)
+    public async Task<IActionResult> Index()
+    {
+        try
         {
-            _service = service;
-            _medicos = medicos;
-            _pacientes = pacientes;
-        }
+            var consultas = await _apiService.GetAllAsync<Consulta>("api/consultas");
+            var medicos = await _apiService.GetAllAsync<Medico>("api/medicosapi");
+            var pacientes = await _apiService.GetAllAsync<Paciente>("api/pacientes");
 
-        public async Task<IActionResult> Index()
-        {
-            var consultas = await _service.ObterTodosAsync();
-            var medicos = await _medicos.ObterTodosAsync();
-            var pacientes = await _pacientes.ObterTodosAsync();
+            // DEBUG: veja quantos registros chegaram
+            ViewData["TotalConsultas"] = consultas.Count;
 
-            var vm = consultas.Select(c => new ConsultaViewModel
+            var model = consultas.Select(c => new ConsultaViewModel
             {
                 Id = c.Id,
                 MedicoId = c.MedicoId,
@@ -33,98 +32,17 @@ namespace ClinicaMedica.Consumidor.Controllers
                 Valor = c.Valor,
                 Status = c.Status,
                 Observacoes = c.Observacoes,
-                NomeMedico = medicos.FirstOrDefault(m => m.Id == c.MedicoId)?.Nome,
-                NomePaciente = pacientes.FirstOrDefault(p => p.Id == c.PacienteId)?.Nome
+                DataCadastro = c.DataCadastro,
+                NomeMedico = medicos.FirstOrDefault(m => m.Id == c.MedicoId)?.Nome ?? "-",
+                NomePaciente = pacientes.FirstOrDefault(p => p.Id == c.PacienteId)?.Nome ?? "-"
             }).ToList();
-            return View(vm);
-        }
 
-        public async Task<IActionResult> Create()
-        {
-            ViewBag.Medicos = await _medicos.ObterTodosAsync();
-            ViewBag.Pacientes = await _pacientes.ObterTodosAsync();
-            return View();
+            return View(model);
         }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(ConsultaViewModel model)
+        catch (Exception ex)
         {
-            if (!ModelState.IsValid) return View(model);
-            var consulta = new Consulta
-            {
-                MedicoId = model.MedicoId,
-                PacienteId = model.PacienteId,
-                DataHoraConsulta = model.DataHoraConsulta,
-                Valor = model.Valor,
-                Status = model.Status,
-                Observacoes = model.Observacoes,
-                DataCadastro = DateTime.Now
-            };
-            await _service.AdicionarAsync(consulta);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Edit(int id)
-        {
-            var consulta = await _service.ObterPorIdAsync(id);
-            if (consulta == null) return NotFound();
-            var vm = new ConsultaViewModel
-            {
-                Id = consulta.Id,
-                MedicoId = consulta.MedicoId,
-                PacienteId = consulta.PacienteId,
-                DataHoraConsulta = consulta.DataHoraConsulta,
-                Valor = consulta.Valor,
-                Status = consulta.Status,
-                Observacoes = consulta.Observacoes
-            };
-            return View(vm);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Edit(ConsultaViewModel model)
-        {
-            if (!ModelState.IsValid) return View(model);
-            var consulta = new Consulta
-            {
-                Id = model.Id,
-                MedicoId = model.MedicoId,
-                PacienteId = model.PacienteId,
-                DataHoraConsulta = model.DataHoraConsulta,
-                Valor = model.Valor,
-                Status = model.Status,
-                Observacoes = model.Observacoes,
-                DataCadastro = DateTime.Now
-            };
-            await _service.AtualizarAsync(model.Id, consulta);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Details(int id)
-        {
-            var consulta = await _service.ObterPorIdAsync(id);
-            if (consulta == null) return NotFound();
-            var medico = await _medicos.ObterPorIdAsync(consulta.MedicoId);
-            var paciente = await _pacientes.ObterPorIdAsync(consulta.PacienteId);
-            var vm = new ConsultaViewModel
-            {
-                Id = consulta.Id,
-                MedicoId = consulta.MedicoId,
-                PacienteId = consulta.PacienteId,
-                DataHoraConsulta = consulta.DataHoraConsulta,
-                Valor = consulta.Valor,
-                Status = consulta.Status,
-                Observacoes = consulta.Observacoes,
-                NomeMedico = medico?.Nome,
-                NomePaciente = paciente?.Nome
-            };
-            return View(vm);
-        }
-
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _service.ExcluirAsync(id);
-            return RedirectToAction(nameof(Index));
+            ViewData["ErroApi"] = $"Erro ao consumir a API: {ex.Message}";
+            return View(new List<ConsultaViewModel>());
         }
     }
 }

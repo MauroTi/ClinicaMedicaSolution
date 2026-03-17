@@ -27,7 +27,7 @@ namespace ClinicaMedica.Consumidor.ViewModels
         [Display(Name = "Status")]
         public string Status { get; set; }
 
-        public List<Medico> MedicosDisponiveis { get; set; }
-        public List<Paciente> PacientesDisponiveis { get; set; }
+        public List<Medico> Medico { get; set; }
+        public List<Paciente> Paciente { get; set; }
     }
 }

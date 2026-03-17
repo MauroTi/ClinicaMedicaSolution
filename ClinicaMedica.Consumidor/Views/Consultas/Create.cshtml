@@ -3,14 +3,7 @@
 <h2>Nova Consulta</h2>
 
 <form asp-action="Create" method="post">
-    <div class="form-group">
-        <label asp-for="MedicoId">Médico</label>
-        <select asp-for="MedicoId" class="form-control" asp-items="@(new SelectList(Model.Medicos, "Id", "Nome"))"></select>
-    </div>
-    <div class="form-group">
-        <label asp-for="PacienteId">Paciente</label>
-        <select asp-for="PacienteId" class="form-control" asp-items="@(new SelectList(Model.Pacientes, "Id", "Nome"))"></select>
-    </div>
+    
     <div class="form-group">
         <label asp-for="DataHoraConsulta"></label>
         <input asp-for="DataHoraConsulta" class="form-control" type="datetime-local" />

@@ -13,7 +13,7 @@
     <dd class="col-sm-10">@Model.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm")</dd>
 
     <dt class="col-sm-2">Valor</dt>
-    <dd class="col-sm-10">@(Model.Valor.HasValue? Model.Valor.Value.ToString("C") : "-")</dd>
+    <dd class="col-sm-10">@(Model.Valor.ToString("C") )</dd>
 
     <dt class="col-sm-2">Status</dt>
     <dd class="col-sm-10">@Model.Status</dd>

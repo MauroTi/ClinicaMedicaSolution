@@ -4,14 +4,8 @@
 
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
-    <div class="form-group">
-        <label asp-for="MedicoId">Médico</label>
-        <select asp-for="MedicoId" class="form-control" asp-items="@(new SelectList(Model.Medicos, "Id", "Nome", Model.MedicoId))"></select>
-    </div>
-    <div class="form-group">
-        <label asp-for="PacienteId">Paciente</label>
-        <select asp-for="PacienteId" class="form-control" asp-items="@(new SelectList(Model.Pacientes, "Id", "Nome", Model.PacienteId))"></select>
-    </div>
+    
+    
     <div class="form-group">
         <label asp-for="DataHoraConsulta"></label>
         <input asp-for="DataHoraConsulta" class="form-control" type="datetime-local" />

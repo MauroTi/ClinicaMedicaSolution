@@ -1,38 +1,44 @@
-﻿@model IEnumerable<ClinicaMedica.Consumidor.ViewModels.PacienteViewModel>
+﻿@model IEnumerable<ClinicaMedica.Consumidor.Models.Paciente>
+
+@{
+    ViewData["Title"] = "Pacientes";
+}
 
 <h2>Pacientes</h2>
 
-<p>
-    <a class="btn btn-primary" asp-action="Create">Novo Paciente</a>
-</p>
+@if (ViewData["ErroApi"] != null)
+{
+    <div class="alert alert-danger">
+        <strong>Erro ao consumir a API:</strong><br />
+        @ViewData["ErroApi"]
+    </div>
+}
 
-<table class="table table-striped table-bordered">
+<table class="table table-striped">
     <thead>
         <tr>
+            <th>ID</th>
             <th>Nome</th>
-            <th>CPF</th>
+            <th>Cpf</th>
             <th>Telefone</th>
             <th>Email</th>
-            <th>Data Nascimento</th>
+            <th>DataNascimento</th>
             <th>Ativo</th>
-            <th>Ações</th>
+            <th>DataCadastro</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var p in Model)
+        @foreach (var paciente in Model)
         {
             <tr>
-                <td>@p.Nome</td>
-                <td>@p.Cpf</td>
-                <td>@p.Telefone</td>
-                <td>@p.Email</td>
-                <td>@p.DataNascimento?.ToString("dd/MM/yyyy")</td>
-                <td>@(p.Ativo ? "Sim" : "Não")</td>
-                <td>
-                    <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@p.Id">Ver</a>
-                    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@p.Id">Editar</a>
-                    <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@p.Id">Excluir</a>
-                </td>
+                <td>@paciente.Id</td>
+                <td>@paciente.Nome</td>
+                <td>@paciente.Cpf</td>
+                <td>@paciente.Telefone</td>
+                <td>@paciente.Email</td>
+                <td>@paciente.DataNascimento</td>
+                <td>@paciente.Ativo</td>
+                <td>@paciente.DataCadastro</td>
             </tr>
         }
     </tbody>

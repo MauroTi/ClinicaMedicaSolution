@@ -2,37 +2,38 @@
 
 <h2>Consultas</h2>
 
-<p>
-    <a class="btn btn-primary" asp-action="Create">Nova Consulta</a>
-</p>
+@if (ViewData["ErroApi"] != null)
+{
+    <div class="alert alert-danger">
+        <strong>@ViewData["ErroApi"]</strong>
+    </div>
+}
 
-<table class="table table-striped table-bordered">
+<table class="table table-striped">
     <thead>
         <tr>
+            <th>Id</th>
             <th>Médico</th>
             <th>Paciente</th>
             <th>Data/Hora</th>
             <th>Valor</th>
             <th>Status</th>
             <th>Observações</th>
-            <th>Ações</th>
+            <th>Data Cadastro</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var c in Model)
+        @foreach (var consulta in Model)
         {
             <tr>
-                <td>@c.NomeMedico</td>
-                <td>@c.NomePaciente</td>
-                <td>@c.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm")</td>
-                <td>@(c.Valor is not null ? $"{c.Valor:C}" : "-")</td>
-                <td>@c.Status</td>
-                <td>@c.Observacoes</td>
-                <td>
-                    <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@c.Id">Ver</a>
-                    <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@c.Id">Editar</a>
-                    <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@c.Id">Excluir</a>
-                </td>
+                <td>@consulta.Id</td>
+                <td>@consulta.NomeMedico</td>
+                <td>@consulta.NomePaciente</td>
+                <td>@(consulta.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm"))</td>
+                <td>@consulta.Valor.ToString("C")</td>
+                <td>@consulta.Status</td>
+                <td>@consulta.Observacoes</td>
+                <td>@consulta.DataCadastro.ToString("dd/MM/yyyy HH:mm")</td>
             </tr>
         }
     </tbody>

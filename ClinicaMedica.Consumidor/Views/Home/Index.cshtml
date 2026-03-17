@@ -16,7 +16,7 @@
                 <div class="card-body text-center">
                     <h5 class="card-title text-primary">Total de Médicos</h5>
                     <h2 class="fw-bold">@Model.TotalMedicos</h2>
-                    <a asp-action="Medicos" class="btn btn-outline-primary mt-3">Ver Médicos</a>
+                    <a asp-controller="Medicos" asp-action="Index" class="btn btn-outline-primary w-100">Ver Médicos </a>
                 </div>
             </div>
         </div>
@@ -26,7 +26,7 @@
                 <div class="card-body text-center">
                     <h5 class="card-title text-success">Total de Pacientes</h5>
                     <h2 class="fw-bold">@Model.TotalPacientes</h2>
-                    <a asp-action="Pacientes" class="btn btn-outline-success mt-3">Ver Pacientes</a>
+                    <a asp-controller="Pacientes" asp-action="Index" class="btn btn-outline-primary w-100">Ver Pacientes </a>
                 </div>
             </div>
         </div>
@@ -36,7 +36,7 @@
                 <div class="card-body text-center">
                     <h5 class="card-title text-warning">Total de Consultas</h5>
                     <h2 class="fw-bold">@Model.TotalConsultas</h2>
-                    <a asp-action="Consultas" class="btn btn-outline-warning mt-3">Ver Consultas</a>
+                    <a asp-controller="Consultas" asp-action="Index" class="btn btn-outline-primary w-100">Ver Consultas </a>
                 </div>
             </div>
         </div>
