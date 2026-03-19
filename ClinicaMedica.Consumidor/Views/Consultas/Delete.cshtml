@@ -1,11 +1,44 @@
 ﻿@model ClinicaMedica.Consumidor.ViewModels.ConsultaViewModel
 
+@{
+    ViewData["Title"] = "Excluir Consulta";
+}
+
 <h2>Excluir Consulta</h2>
 
-<p>Tem certeza que deseja excluir a consulta de <strong>@Model.NomePaciente</strong> com o médico <strong>@Model.NomeMedico</strong> em <strong>@Model.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm")</strong>?</p>
+<div class="alert alert-danger">
+    Tem certeza que deseja excluir esta consulta?
+</div>
 
-<form asp-action="Delete" method="post">
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">ID</dt>
+            <dd class="col-sm-9">@Model.Id</dd>
+
+            <dt class="col-sm-3">Médico</dt>
+            <dd class="col-sm-9">@Model.NomeMedico</dd>
+
+            <dt class="col-sm-3">Paciente</dt>
+            <dd class="col-sm-9">@Model.NomePaciente</dd>
+
+            <dt class="col-sm-3">Data/Hora</dt>
+            <dd class="col-sm-9">@Model.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm")</dd>
+
+            <dt class="col-sm-3">Valor</dt>
+            <dd class="col-sm-9">@Model.Valor.ToString("C")</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.Status</dd>
+
+            <dt class="col-sm-3">Observações</dt>
+            <dd class="col-sm-9">@Model.Observacoes</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post" class="mt-3">
     <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Excluir</button>
+    <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>

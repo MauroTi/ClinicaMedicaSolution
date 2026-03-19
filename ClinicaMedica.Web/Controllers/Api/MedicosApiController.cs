@@ -1,4 +1,4 @@
-﻿// Path: Controllers/Api/MedicosApiController.cs
+﻿// Path: Controllers/api/medicosApiController.cs
 using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;

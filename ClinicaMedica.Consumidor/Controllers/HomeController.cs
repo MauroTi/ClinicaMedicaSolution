@@ -18,7 +18,7 @@ namespace ClinicaMedica.Consumidor.Controllers
             try
             {
                 // AJUSTE ESTES ENDPOINTS CONFORME A SUA API REAL
-                var totalMedicos = await _apiService.GetAllAsync<object>("api/medicosapi");
+                var totalMedicos = await _apiService.GetAllAsync<object>("api/medicosApi");
                 var totalPacientes = await _apiService.GetAllAsync<object>("api/Pacientes");
                 var totalConsultas = await _apiService.GetAllAsync<object>("api/Consultas");
 

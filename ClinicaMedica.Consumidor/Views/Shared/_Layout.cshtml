@@ -48,9 +48,17 @@
 
 
                         <li class="nav-item">
-                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Consultas" ? "active" : "")"
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Consultas" 
+                                                                && ViewContext.RouteData.Values["action"]?.ToString() != "GraficoStatus" ? "active" : "")"
                                    asp-controller="Consultas" asp-action="Index">
                                 <i class="bi bi-calendar-check"></i> Consultas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Consultas" 
+                                                                && ViewContext.RouteData.Values["action"]?.ToString() == "GraficoStatus" ? "active" : "")"
+                                   asp-controller="Consultas" asp-action="GraficoStatus">
+                                <i class="bi bi-pie-chart"></i> Gráfico
                             </a>
                         </li>
                     </ul>

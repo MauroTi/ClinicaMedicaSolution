@@ -1,10 +1,28 @@
 ﻿@model ClinicaMedica.Consumidor.ViewModels.MedicoViewModel
 
+@{
+    ViewData["Title"] = "Excluir Médico";
+}
+
 <h2>Excluir Médico</h2>
 
-<p>Tem certeza que deseja excluir o médico <strong>@Model.Nome</strong>?</p>
+<div class="alert alert-warning">
+    Tem certeza que deseja excluir o médico <strong>@Model.Nome</strong>?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Especialidade</dt>
+    <dd class="col-sm-9">@Model.Especialidade</dd>
+
+    <dt class="col-sm-3">CRM</dt>
+    <dd class="col-sm-9">@Model.Crm</dd>
+
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@Model.Email</dd>
+</dl>
 
 <form asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
     <button type="submit" class="btn btn-danger">Excluir</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>

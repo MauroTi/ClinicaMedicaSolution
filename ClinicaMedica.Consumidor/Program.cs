@@ -13,6 +13,11 @@ builder.Services.AddHttpClient<ApiService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+// ✅ Registra o MedicoService
+builder.Services.AddScoped<MedicoService>();
+builder.Services.AddScoped<PacienteService>();
+builder.Services.AddScoped<ConsultaService>();
+
 var app = builder.Build();
 
 // Pipeline de tratamento de erros
