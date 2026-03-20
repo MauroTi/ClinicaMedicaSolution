@@ -1,4 +1,9 @@
-﻿namespace ClinicaMedica.Web.ViewModels.Dashboard
+﻿using System;
+
+using Microsoft.AspNetCore.Mvc;
+using ClinicaMedica.Web.ViewModels; // para seus ViewModels
+
+namespace ClinicaMedica.Web.ViewModels.Dashboard
 {
     public class DashboardViewModel
     {
@@ -10,5 +15,6 @@
         public int ConsultasAgendadas { get; set; }
         public int ConsultasRealizadas { get; set; }
         public int ConsultasCanceladas { get; set; }
+        
     }
 }

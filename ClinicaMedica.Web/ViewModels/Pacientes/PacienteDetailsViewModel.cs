@@ -1,4 +1,4 @@
-﻿namespace ClinicaMedica.Web.ViewModels.Paciente
+﻿namespace ClinicaMedica.Web.ViewModels.Pacientes
 {
     public class PacienteDetailsViewModel
     {

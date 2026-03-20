@@ -1,6 +1,7 @@
 ﻿@model Dictionary<string, int>
 
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Gráfico de Status das Consultas";
 }
 
@@ -11,7 +12,6 @@
         </h2>
         <p class="text-muted mb-0">Distribuição por status das consultas cadastradas.</p>
     </div>
-
     <a asp-action="Index" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Voltar
     </a>
@@ -30,68 +30,62 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-        const canvas = document.getElementById('graficoStatus');
+            const canvas = document.getElementById('graficoStatus');
+            if (!canvas) {
+                console.error("Canvas graficoStatus não encontrado.");
+                return;
+            }
 
-        if (!canvas) {
-        console.error("Canvas graficoStatus não encontrado.");
-        return;
-        }
+            const ctx = canvas.getContext('2d');
 
-        const ctx = canvas.getContext('2d');
+            const labelsOriginais = (@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Keys)));
+            const valores = (@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Values)));
 
-        const labelsOriginais = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Keys));
-        const valores = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Values));
+            const labels = labelsOriginais.map((label, index) => `${label} (${valores[index]})`);
 
-        const labels = labelsOriginais.map((label, index) => `${label} (${valores[index]})`);
+            const cores = labelsOriginais.map(label => {
+                const status = label.toLowerCase().trim();
+                if (status === 'agendada') return '#0d6efd';
+                if (status === 'realizada') return '#198754';
+                if (status === 'cancelada') return '#dc3545';
+                return '#6c757d';
+            });
 
-        const cores = labelsOriginais.map(label => {
-        const status = label.toLowerCase().trim();
-
-        if (status === 'agendada') return '#0d6efd';   // azul
-        if (status === 'realizada') return '#198754';  // verde
-        if (status === 'cancelada') return '#dc3545';  // vermelho
-
-        return '#6c757d'; // cinza para qualquer status inesperado
-        });
-
-        new Chart(ctx, {
-        type: 'pie',
-        data: {
-        labels: labels,
-        datasets: [{
-        label: 'Consultas por Status',
-        data: valores,
-        backgroundColor: cores,
-        borderWidth: 1
-        }]
-        },
-        options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-        legend: {
-        position: 'bottom'
-        }
-        }
-        }
-        });
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Consultas por Status',
+                        data: valores,
+                        backgroundColor: cores,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
         });
     </script>
 
     <style>
         .chart-container {
-        position: relative;
-        width: 100%;
-        height: 350px;
+            position: relative;
+            width: 100%;
+            height: 350px;
         }
 
-        @@media (max-width: 768px) {
-        .chart-container {
-        height: 280px;
-        }
+        @@media (max-width: 768px) { <!--
+
+            aqui -->
+            .chart-container {
+                height: 280px;
+            }
         }
     </style>
 }

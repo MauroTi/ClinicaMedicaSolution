@@ -1,7 +1,6 @@
 using ClinicaMedica.Web.Daos;
 using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Data;
-using ClinicaMedica.Web.Interfaces;
 using ClinicaMedica.Web.Services;
 using ClinicaMedica.Web.Services.Interfaces;
 using System.Globalization;

@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using MySql.Data.MySqlClient;
-using ClinicaMedica.Web.Data.Interfaces;
 
 namespace ClinicaMedica.Web.Data
 {

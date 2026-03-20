@@ -1,5 +1,4 @@
-﻿using ClinicaMedica.Web.Interfaces;
-using ClinicaMedica.Web.Models;
+﻿using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

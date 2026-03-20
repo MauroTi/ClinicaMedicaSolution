@@ -1,12 +1,11 @@
 ﻿using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Data;
-using ClinicaMedica.Web.Interfaces;
 using ClinicaMedica.Web.Models;
-using ClinicaMedica.Web.Models.DTOs;
 using Dapper;
 using System.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ClinicaMedica.Web.DTOs;
 
 namespace ClinicaMedica.Web.Daos
 {

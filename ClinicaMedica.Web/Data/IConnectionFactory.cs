@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace ClinicaMedica.Web.Data.Interfaces
+namespace ClinicaMedica.Web.Data
 {
     public interface IConnectionFactory
     {

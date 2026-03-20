@@ -1,4 +1,4 @@
-namespace ClinicaMedica.Web.Models.DTOs
+namespace ClinicaMedica.Web.DTOs
 {
     public class ConsultaDto
     {

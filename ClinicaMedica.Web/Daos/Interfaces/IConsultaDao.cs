@@ -1,7 +1,7 @@
-﻿using ClinicaMedica.Web.Models;
-using ClinicaMedica.Web.Models.DTOs;
+﻿using ClinicaMedica.Web.DTOs;
+using ClinicaMedica.Web.Models;
 
-namespace ClinicaMedica.Web.Interfaces
+namespace ClinicaMedica.Web.Daos.Interfaces
 {
     public interface IConsultaDao
     {

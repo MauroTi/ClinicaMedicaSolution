@@ -1,4 +1,4 @@
-﻿using ClinicaMedica.Web.Models.DTOs;
+﻿using ClinicaMedica.Web.DTOs;
 
 namespace ClinicaMedica.Web.ViewModels.Consultas
 {

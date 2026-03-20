@@ -1,6 +1,7 @@
-﻿using ClinicaMedica.Web.Interfaces;
+﻿using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.DTOs;
 using ClinicaMedica.Web.Models;
-using ClinicaMedica.Web.Models.DTOs;
+using ClinicaMedica.Web.Services.Interfaces;
 
 namespace ClinicaMedica.Web.Services
 {

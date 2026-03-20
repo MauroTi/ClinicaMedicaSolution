@@ -1,6 +1,5 @@
 ﻿using ClinicaMedica.Web.DTOs;
 using ClinicaMedica.Web.Models;
-using ClinicaMedica.Web.Models.DTOs;
 using ClinicaMedica.Web.ViewModels.Consultas;
 using ClinicaMedica.Web.ViewModels.Medicos;
 using ClinicaMedica.Web.ViewModels.Pacientes;
