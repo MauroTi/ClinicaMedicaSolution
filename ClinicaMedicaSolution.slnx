@@ -1,6 +1,9 @@
 <Solution>
   <Project Path="ClinicaMedica.Consumidor/ClinicaMedica.Consumidor.csproj">
     <BuildDependency Project="ClinicaMedica.Web/ClinicaMedica.Web.csproj" />
+    <Build Solution="Release|*" Project="false" />
   </Project>
-  <Project Path="ClinicaMedica.Web/ClinicaMedica.Web.csproj" />
+  <Project Path="ClinicaMedica.Web/ClinicaMedica.Web.csproj">
+    <Build Solution="Release|*" Project="false" />
+  </Project>
 </Solution>

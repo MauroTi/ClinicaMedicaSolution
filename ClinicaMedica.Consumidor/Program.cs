@@ -9,7 +9,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<ApiService>(client =>
 {
     // ⚠️ TROQUE A PORTA SE SUA API ESTIVER EM OUTRA
-    client.BaseAddress = new Uri("https://localhost:44356/");
+    client.BaseAddress = new Uri("http://localhost:8081/");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
