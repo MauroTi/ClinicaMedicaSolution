@@ -1,62 +1,211 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using ClinicaMedica.Web.Infrastructure.Database.Providers
+@inject IDatabaseProviderResolver resolver
+
+@{
+    var currentProvider = resolver.GetProvider();
+}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Clínica Médica</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-   
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="stylesheet" href="~/ClinicaMedica.Web.styles.css" asp-append-version="true" />
-
 </head>
 <body>
+
+    <!-- 🔥 ALERTA DE ERRO DE BANCO -->
+    @if (TempData["DbError"] != null)
+    {
+        <div class="alert alert-danger text-center m-2">
+            @TempData["DbError"]
+        </div>
+    }
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ClinicaMedica.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-hospital"></i> Clínica Médica
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+
                     <ul class="navbar-nav flex-grow-1">
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-light" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                            <a class="nav-link text-light" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Medicos" asp-action="Index">Médicos</a>
+                            <a class="nav-link text-light" asp-controller="Medicos" asp-action="Index">Médicos</a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Pacientes" asp-action="Index">Pacientes</a>
+                            <a class="nav-link text-light" asp-controller="Pacientes" asp-action="Index">Pacientes</a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Consultas" asp-action="Index">Consultas</a>
+                            <a class="nav-link text-light" asp-controller="Consultas" asp-action="Index">Consultas</a>
                         </li>
+
+                        <!-- 🔥 DROPDOWN CORRIGIDO -->
+                        <li class="nav-item dropdown ms-auto">
+                            <a class="nav-link dropdown-toggle text-light" href="#"
+                               data-bs-toggle="dropdown">
+                                <i class="fas fa-database"></i>
+                                Banco: <strong>@currentProvider</strong>
+                            </a>
+
+                            <ul class="dropdown-menu dropdown-menu-end">
+
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="switchDatabase('MySql', event)">
+                                        <i class="fas fa-check me-2"
+                                           style="visibility:@(currentProvider == DatabaseProvider.MySql ? "visible" : "hidden")"></i>
+                                        MySQL
+                                    </a>
+                                </li>
+
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="switchDatabase('Oracle', event)">
+                                        <i class="fas fa-check me-2"
+                                           style="visibility:@(currentProvider == DatabaseProvider.Oracle ? "visible" : "hidden")"></i>
+                                        Oracle
+                                    </a>
+                                </li>
+
+                                <li><hr class="dropdown-divider"></li>
+
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="showConnectionInfo(event)">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Informações de Conexão
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </li>
+
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
-        <main role="main" class="pb-3">
+        <main class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- MODAL INFO -->
+    <div class="modal fade" id="connectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-database me-2"></i>Informações
+                    </h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p><strong>Provider:</strong> <span id="provider-info"></span></p>
+                    <p><strong>Connection:</strong> <span id="connection-string-info"></span></p>
+                    <p id="connection-status"></p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="position-fixed bottom-0 end-0 p-3">
+        <div id="successToast" class="toast">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto">Notificação</strong>
+                <button class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-message"></div>
+        </div>
+    </div>
+
+    <footer class="border-top footer text-muted mt-5">
         <div class="container">
-            &copy; 2026 - ClinicaMedica.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - Clínica Médica
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- 🔥 SCRIPT FINAL LIMPO -->
+    <script>
+        async function switchDatabase(provider, event) {
+            event.preventDefault();
+
+            try {
+                const response = await fetch('/Database/SetDatabaseProvider', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `provider=${provider}`
+                });
+
+                if (!response.ok) {
+                    showToast("Erro ao trocar banco");
+                    return;
+                }
+
+                // 🔥 ESSENCIAL
+                location.reload();
+
+            } catch {
+                showToast("Erro ao trocar banco");
+            }
+        }
+
+        async function showConnectionInfo(event) {
+            event.preventDefault();
+
+            const response = await fetch('/api/database/connection-info');
+            const data = await response.json();
+
+            document.getElementById('provider-info').textContent = data.provider;
+            document.getElementById('connection-string-info').textContent = data.connectionString;
+
+            document.getElementById('connection-status').innerHTML =
+                data.isConnected
+                    ? '<span class="badge bg-success">Conectado</span>'
+                    : '<span class="badge bg-danger">Erro</span>';
+
+            new bootstrap.Modal(document.getElementById('connectionModal')).show();
+        }
+
+        function showToast(message) {
+            document.getElementById('toast-message').textContent = message;
+            new bootstrap.Toast(document.getElementById('successToast')).show();
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>
+

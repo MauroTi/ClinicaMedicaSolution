@@ -1,50 +1,49 @@
-﻿using ClinicaMedica.Web.Data;
+using ClinicaMedica.Web.Data;
 using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Models;
 using Dapper;
-using System.Data;
 
 namespace ClinicaMedica.Web.Daos
 {
     public class PacienteDao : IPacienteDao
     {
-        private readonly IDbConnection _dbConnection;
+        private readonly DbConnectionFactory _dbFactory;
 
         public PacienteDao(DbConnectionFactory dbFactory)
         {
-            _dbConnection = dbFactory.CreateConnection();
+            _dbFactory = dbFactory;
         }
 
-        // Lista todos os pacientes
         public IEnumerable<Paciente> ObterTodos()
         {
-            string sql = "SELECT * FROM pacientes";
-            return _dbConnection.Query<Paciente>(sql);
+            using var connection = _dbFactory.CreateConnection();
+            const string sql = "SELECT * FROM pacientes";
+            return connection.Query<Paciente>(sql);
         }
 
-        // Busca paciente por ID
         public Paciente? ObterPorId(int id)
         {
-            string sql = "SELECT * FROM pacientes WHERE Id = @Id";
-            return _dbConnection.QueryFirstOrDefault<Paciente>(sql, new { Id = id });
+            using var connection = _dbFactory.CreateConnection();
+            const string sql = "SELECT * FROM pacientes WHERE Id = @Id";
+            return connection.QueryFirstOrDefault<Paciente>(sql, new { Id = id });
         }
-
-        // Cria novo paciente
 
         public async Task<bool> ExisteCpfAsync(string cpf)
         {
-            string sql = "SELECT COUNT(1) FROM pacientes WHERE Cpf = @Cpf";
-            int count = await _dbConnection.ExecuteScalarAsync<int>(sql, new { Cpf = cpf });
+            using var connection = _dbFactory.CreateConnection();
+            const string sql = "SELECT COUNT(1) FROM pacientes WHERE Cpf = @Cpf";
+            int count = await connection.ExecuteScalarAsync<int>(sql, new { Cpf = cpf });
             return count > 0;
         }
+
         public async Task CriarAsync(Paciente model)
         {
-            string sql = @"
+            using var connection = _dbFactory.CreateConnection();
+            const string sql = @"
                 INSERT INTO pacientes (Nome, Cpf, Telefone, Email, DataNascimento, Ativo, DataCadastro)
                 VALUES (@Nome, @Cpf, @Telefone, @Email, @DataNascimento, @Ativo, @DataCadastro)";
 
-            // Usando objeto anônimo para garantir mapeamento correto
-            await _dbConnection.ExecuteAsync(sql, new
+            await connection.ExecuteAsync(sql, new
             {
                 model.Nome,
                 model.Cpf,
@@ -56,10 +55,10 @@ namespace ClinicaMedica.Web.Daos
             });
         }
 
-        // Atualiza paciente existente
         public async Task<bool> EditarAsync(Paciente model)
         {
-            string sql = @"
+            using var connection = _dbFactory.CreateConnection();
+            const string sql = @"
                 UPDATE pacientes
                 SET Nome = @Nome,
                     Cpf = @Cpf,
@@ -69,7 +68,7 @@ namespace ClinicaMedica.Web.Daos
                     Ativo = @Ativo
                 WHERE Id = @Id";
 
-            var affectedRows = await _dbConnection.ExecuteAsync(sql, new
+            var affectedRows = await connection.ExecuteAsync(sql, new
             {
                 model.Nome,
                 model.Cpf,
@@ -83,11 +82,11 @@ namespace ClinicaMedica.Web.Daos
             return affectedRows > 0;
         }
 
-        // Exclui paciente
         public async Task<bool> ExcluirAsync(int id)
         {
-            string sql = "DELETE FROM pacientes WHERE Id = @Id";
-            var affectedRows = await _dbConnection.ExecuteAsync(sql, new { Id = id });
+            using var connection = _dbFactory.CreateConnection();
+            const string sql = "DELETE FROM pacientes WHERE Id = @Id";
+            var affectedRows = await connection.ExecuteAsync(sql, new { Id = id });
             return affectedRows > 0;
         }
     }

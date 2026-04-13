@@ -1,74 +1,105 @@
-﻿using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.Daos.Interfaces;
 using ClinicaMedica.Web.Data;
+using ClinicaMedica.Web.DTOs;
 using ClinicaMedica.Web.Models;
 using Dapper;
-using System.Data;
+using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
-using ClinicaMedica.Web.DTOs;
 
 namespace ClinicaMedica.Web.Daos
 {
-    public class ConsultaDao : IConsultaDao
+    public class ConsultaDao(DbConnectionFactory dbFactory) : IConsultaDao
     {
-        private readonly IDbConnection _dbConnection;
+        private readonly DbConnectionFactory _dbFactory = dbFactory;
 
-        public ConsultaDao(DbConnectionFactory dbFactory)
-        {
-            _dbConnection = dbFactory.CreateConnection();
-        }
+        #region QUERIES BASE
 
-        // Obter todas as consultas (simples)
+        private const string SelectBase = "SELECT * FROM consultas";
+
+        private const string SelectDetalhado = @"
+            SELECT c.Id, c.MedicoId, c.PacienteId, c.DataHoraConsulta, c.Valor, c.Status, c.Observacoes, c.DataCadastro,
+                   m.Nome AS MedicoNome, m.Especialidade, m.Crm,
+                   p.Nome AS PacienteNome, p.Telefone, p.Email
+            FROM consultas c
+            INNER JOIN medicos m ON c.MedicoId = m.Id
+            INNER JOIN pacientes p ON c.PacienteId = p.Id";
+
+        private const string InsertSql = @"
+            INSERT INTO consultas (MedicoId, PacienteId, DataHoraConsulta, Valor, Status, Observacoes, DataCadastro)
+            VALUES (@MedicoId, @PacienteId, @DataHoraConsulta, @Valor, @Status, @Observacoes, @DataCadastro)";
+
+        #endregion
+
+        #region SELECTS
+
         public async Task<IEnumerable<Consulta>> ObterTodosAsync()
         {
-            string sql = "SELECT * FROM consultas";
-            return await _dbConnection.QueryAsync<Consulta>(sql);
+            using var conn = _dbFactory.CreateOpenConnection();
+            return await conn.QueryAsync<Consulta>(SelectBase);
         }
 
-        // Obter consulta por ID (assíncrono)
         public async Task<Consulta?> ObterPorIdAsync(int id)
         {
-            string sql = "SELECT * FROM consultas WHERE Id = @Id";
-            return await _dbConnection.QueryFirstOrDefaultAsync<Consulta>(sql, new { Id = id });
+            using var conn = _dbFactory.CreateOpenConnection();
+            return await conn.QueryFirstOrDefaultAsync<Consulta>(
+                $"{SelectBase} WHERE Id = @Id", new { Id = id });
         }
 
-        // Obter todas as consultas com detalhes (DTO)
         public async Task<IEnumerable<ConsultaDto>> ObterTodosDetalhadosAsync()
         {
-            string sql = @"
-                SELECT c.Id, c.MedicoId, c.PacienteId, c.DataHoraConsulta, c.Valor, c.Status, c.Observacoes, c.DataCadastro,
-                       m.Nome AS MedicoNome, m.Especialidade, m.Crm,
-                       p.Nome AS PacienteNome, p.Telefone, p.Email
-                FROM consultas c
-                INNER JOIN medicos m ON c.MedicoId = m.Id
-                INNER JOIN pacientes p ON c.PacienteId = p.Id
-            ";
-
-            var consultas = await _dbConnection.QueryAsync<ConsultaDto>(sql);
-            return consultas;
+            using var conn = _dbFactory.CreateOpenConnection();
+            return await conn.QueryAsync<ConsultaDto>(SelectDetalhado);
         }
 
-        // Criar nova consulta
-        public async Task CriarAsync(Consulta model)
+        #endregion
+
+        #region INSERT
+
+        public async Task<int> InserirAsync(Consulta consulta)
         {
-            string sql = @"
-                INSERT INTO consultas (MedicoId, PacienteId, DataHoraConsulta, Valor, Status, Observacoes, DataCadastro)
-                VALUES (@MedicoId, @PacienteId, @DataHoraConsulta, @Valor, @Status, @Observacoes, @DataCadastro)";
-            await _dbConnection.ExecuteAsync(sql, model);
+            if (_dbFactory.IsOracle)
+                return await InserirOracleAsync(consulta);
+
+            using var conn = _dbFactory.CreateOpenConnection();
+
+            var sql = InsertSql + "; SELECT LAST_INSERT_ID();";
+
+            return await conn.ExecuteScalarAsync<int>(sql, consulta);
         }
 
-        // Excluir consulta
-        public async Task<bool> ExcluirAsync(int id)
+        private async Task<int> InserirOracleAsync(Consulta consulta)
         {
-            string sql = "DELETE FROM consultas WHERE Id = @Id";
-            var affectedRows = await _dbConnection.ExecuteAsync(sql, new { Id = id });
-            return affectedRows > 0;
+            using var conn = (OracleConnection)_dbFactory.CreateOpenConnection();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = InsertSql + " RETURNING Id INTO :Id";
+
+            AddOracleParameters(cmd, consulta);
+
+            var idParam = new OracleParameter("Id", OracleDbType.Int32)
+            {
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(idParam);
+
+            await cmd.ExecuteNonQueryAsync();
+
+            return ConvertOracleId(idParam.Value);
         }
 
-        // Atualizar consulta
+        #endregion
+
+        #region UPDATE / DELETE
+
         public async Task<bool> AtualizarAsync(Consulta consulta)
         {
-            string sql = @"
+            using var conn = _dbFactory.CreateOpenConnection();
+
+            const string sql = @"
                 UPDATE consultas
                 SET MedicoId = @MedicoId,
                     PacienteId = @PacienteId,
@@ -77,24 +108,54 @@ namespace ClinicaMedica.Web.Daos
                     Status = @Status,
                     Observacoes = @Observacoes
                 WHERE Id = @Id";
-            var affectedRows = await _dbConnection.ExecuteAsync(sql, consulta);
-            return affectedRows > 0;
+
+            return (await conn.ExecuteAsync(sql, consulta)) > 0;
         }
 
-        // Inserir consulta e retornar ID
-        public async Task<int> InserirAsync(Consulta consulta)
+        public async Task<bool> ExcluirAsync(int id)
         {
-            string sql = @"
-                INSERT INTO consultas (MedicoId, PacienteId, DataHoraConsulta, Valor, Status, Observacoes, DataCadastro)
-                VALUES (@MedicoId, @PacienteId, @DataHoraConsulta, @Valor, @Status, @Observacoes, @DataCadastro);
-                SELECT LAST_INSERT_ID();";
-            var id = await _dbConnection.ExecuteScalarAsync<int>(sql, consulta);
-            return id;
+            using var conn = _dbFactory.CreateOpenConnection();
+
+            const string sql = "DELETE FROM consultas WHERE Id = @Id";
+
+            return (await conn.ExecuteAsync(sql, new { Id = id })) > 0;
         }
+
+        #endregion
+
+        #region HELPERS (ORACLE)
+
+        private static void AddOracleParameters(OracleCommand cmd, Consulta c)
+        {
+            cmd.Parameters.Add(new OracleParameter("MedicoId", c.MedicoId));
+            cmd.Parameters.Add(new OracleParameter("PacienteId", c.PacienteId));
+            cmd.Parameters.Add(new OracleParameter("DataHoraConsulta", c.DataHoraConsulta));
+            cmd.Parameters.Add(new OracleParameter("Valor", c.Valor));
+            cmd.Parameters.Add(new OracleParameter("Status", c.Status));
+            cmd.Parameters.Add(new OracleParameter("Observacoes", c.Observacoes ?? (object)DBNull.Value));
+            cmd.Parameters.Add(new OracleParameter("DataCadastro", c.DataCadastro));
+        }
+
+        private static int ConvertOracleId(object value)
+        {
+            return value switch
+            {
+                OracleDecimal od => od.ToInt32(),
+                decimal d => Convert.ToInt32(d),
+                int i => i,
+                _ => throw new InvalidOperationException("Erro ao converter Id do Oracle.")
+            };
+        }
+
+        #endregion
+
+        #region LEGADO
 
         IEnumerable<Consulta> IConsultaDao.ObterTodos()
         {
             throw new NotImplementedException();
         }
+
+        #endregion
     }
 }

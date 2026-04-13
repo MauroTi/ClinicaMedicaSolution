@@ -15,37 +15,83 @@ namespace ClinicaMedica.Web.Daos
             _dbConnectionFactory = dbConnectionFactory;
         }
 
+        private bool IsOracle(IDbConnection db)
+        {
+            return db.GetType().Name.Contains("Oracle");
+        }
+
         public async Task<int> ObterTotalMedicosAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            return await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM medicos");
+
+            var sql = IsOracle(db)
+                ? "SELECT COUNT(*) FROM CLINICA.MEDICOS"
+                : "SELECT COUNT(*) FROM medicos";
+
+            return await db.ExecuteScalarAsync<int>(sql);
         }
 
         public async Task<int> ObterTotalPacientesAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            return await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM pacientes");
+
+            var sql = IsOracle(db)
+                ? "SELECT COUNT(*) FROM CLINICA.PACIENTES"
+                : "SELECT COUNT(*) FROM pacientes";
+
+            return await db.ExecuteScalarAsync<int>(sql);
         }
 
         public async Task<int> ObterTotalConsultasAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            return await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM consultas");
+
+            var sql = IsOracle(db)
+                ? "SELECT COUNT(*) FROM CLINICA.CONSULTAS"
+                : "SELECT COUNT(*) FROM consultas";
+
+            return await db.ExecuteScalarAsync<int>(sql);
         }
 
         public async Task<decimal> ObterReceitaTotalAsync()
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            return await db.ExecuteScalarAsync<decimal>("SELECT IFNULL(SUM(Valor),0) FROM consultas WHERE Status='Realizada'");
+
+            var sql = IsOracle(db)
+                ? @"SELECT NVL(SUM(VALOR),0) 
+                    FROM CLINICA.CONSULTAS 
+                    WHERE STATUS = 'REALIZADA'"
+                : @"SELECT COALESCE(SUM(Valor),0) 
+                    FROM consultas 
+                    WHERE Status = 'Realizada'";
+
+            return await db.ExecuteScalarAsync<decimal>(sql);
         }
 
         public async Task<int> ConsultasPorStatusAsync(string status)
         {
             using IDbConnection db = _dbConnectionFactory.CreateConnection();
-            return await db.ExecuteScalarAsync<int>(
-                "SELECT COUNT(*) FROM consultas WHERE Status = @Status",
-                new { Status = status }
-            );
+
+            var statusNormalizado = status.ToUpper();
+
+            if (IsOracle(db))
+            {
+                return await db.ExecuteScalarAsync<int>(
+                    @"SELECT COUNT(*) 
+              FROM CLINICA.CONSULTAS 
+              WHERE STATUS = :status",
+                    new { status = statusNormalizado }
+                );
+            }
+            else
+            {
+                return await db.ExecuteScalarAsync<int>(
+                    @"SELECT COUNT(*) 
+              FROM consultas 
+              WHERE UPPER(Status) = @status",
+                    new { status = statusNormalizado }
+                );
+            }
         }
     }
-}
+    }

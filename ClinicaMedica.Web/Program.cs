@@ -1,28 +1,42 @@
+using ClinicaMedica.Web.Configuration;
+using ClinicaMedica.Web.Data;
 using ClinicaMedica.Web.Daos;
 using ClinicaMedica.Web.Daos.Interfaces;
-using ClinicaMedica.Web.Data;
+using ClinicaMedica.Web.Infrastructure.Repositories;
 using ClinicaMedica.Web.Services;
 using ClinicaMedica.Web.Services.Interfaces;
-using System.Globalization;
-using Microsoft.AspNetCore.Localization;
-using System.IO;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
+using ClinicaMedica.Web.Core.Entities;
+using ClinicaMedica.Web.Infrastructure.Database.Providers;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ========================
-// Serviços MVC e Controllers
+// Configurações
 // ========================
-builder.Services.AddControllers();
-builder.Services.AddControllersWithViews();
+builder.Services.Configure<DatabaseSettings>(
+    builder.Configuration.GetSection("DatabaseSettings"));
 
 // ========================
-// DB Connection Factory
+// Infrastructure
 // ========================
-builder.Services.AddSingleton<DbConnectionFactory>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IDatabaseProviderResolver, DatabaseProviderResolver>();
+builder.Services.AddScoped<IDbConnectionProvider, MySqlConnectionProvider>();
+builder.Services.AddScoped<IDbConnectionProvider, OracleConnectionProvider>();
+builder.Services.AddScoped<DbConnectionFactory>();
+
 
 // ========================
-// DAOs
+// Repositories
+// ========================
+builder.Services.AddScoped<IGenericRepository<Medico>, MedicoRepository>();
+
+// ========================
+// DAOs (Mantém compatibilidade)
 // ========================
 builder.Services.AddScoped<IDashboardDao, DashboardDao>();
 builder.Services.AddScoped<IMedicoDao, MedicoDao>();
@@ -42,7 +56,19 @@ builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddScoped<IConsultaService, ConsultaService>();
 
 // ========================
-// CORS - permitir Consumer na porta 8082
+// Services de Configuração
+// ========================
+IServiceCollection serviceCollection = builder.Services.AddScoped<IDatabaseConfigurationService, DatabaseConfigurationService>();
+
+// ========================
+// MVC & Pages
+// ========================
+builder.Services.AddControllers();
+builder.Services.AddRazorPages();
+builder.Services.AddControllersWithViews();
+
+// ========================
+// CORS
 // ========================
 builder.Services.AddCors(options =>
 {
@@ -55,21 +81,18 @@ builder.Services.AddCors(options =>
 });
 
 // ========================
-// DataProtection - persistir chaves em pasta para IIS
+// DataProtection
 // ========================
 var keysFolder = @"C:\Projetos\ClinicaMedica\publish\Keys";
-Directory.CreateDirectory(keysFolder); // garante que pasta exista
+Directory.CreateDirectory(keysFolder);
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
     .SetApplicationName("ClinicaMedica");
 
-// ========================
-// Construir app
-// ========================
 var app = builder.Build();
 
 // ========================
-// Cultura pt-BR
+// Middleware
 // ========================
 var ptBR = new CultureInfo("pt-BR");
 var localizationOptions = new RequestLocalizationOptions
@@ -79,34 +102,27 @@ var localizationOptions = new RequestLocalizationOptions
     SupportedUICultures = new List<CultureInfo> { ptBR }
 };
 
-// ========================
-// Pipeline HTTP
-// ========================
 if (!app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// Sem HTTPS no IIS
-// app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseRequestLocalization(localizationOptions);
-
 app.UseRouting();
-
-// Habilitar CORS
 app.UseCors("AllowConsumer");
-
 app.UseAuthorization();
 
-// MVC default route
+// ========================
+// Rotas
+// ========================
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// API controllers
+app.MapRazorPages();
 app.MapControllers();
 
 app.Run();

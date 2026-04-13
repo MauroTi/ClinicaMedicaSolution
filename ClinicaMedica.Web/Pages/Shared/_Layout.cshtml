@@ -1,0 +1,258 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Clínica Médica</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/ClinicaMedica.Web.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-hospital"></i> Clínica Médica
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Medicos" asp-action="Index">Médicos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Pacientes" asp-action="Index">Pacientes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light" asp-controller="Consultas" asp-action="Index">Consultas</a>
+                        </li>
+                        <li class="nav-item dropdown ms-auto">
+                            <a class="nav-link dropdown-toggle text-light" href="#" id="databaseDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-database"></i> Banco de Dados
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="databaseDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="switchDatabase('MySql', event)">
+                                        <i class="fas fa-check me-2" id="mysql-check" style="visibility: hidden;"></i> MySQL
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="switchDatabase('Oracle', event)">
+                                        <i class="fas fa-check me-2" id="oracle-check" style="visibility: hidden;"></i> Oracle
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="showConnectionInfo(event)">
+                                        <i class="fas fa-info-circle me-2"></i> Informações de Conexão
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Modal para Informações de Conexão -->
+    <div class="modal fade" id="connectionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-database me-2"></i>Informações de Conexão
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <strong>Provedor:</strong>
+                        <p class="text-muted" id="provider-info">-</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>String de Conexão:</strong>
+                        <p class="text-muted small" id="connection-string-info">-</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Status:</strong>
+                        <p id="connection-status"><span class="badge">Carregando...</span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast para Notificações -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto">
+                    <i class="fas fa-check-circle me-2"></i>Notificação
+                </strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-message">
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-top footer text-muted mt-5">
+        <div class="container">
+            &copy; 2026 - Clínica Médica - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidade</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        console.log('Script de banco de dados carregado');
+
+        // Carregar provider atual e status de conexão
+        async function loadCurrentProvider() {
+            try {
+                console.log('Carregando provider atual...');
+                const response = await fetch('/api/database/current-provider', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Provider carregado:', data.provider);
+                    updateProviderCheckmarks(data.provider);
+                } else {
+                    console.error('Erro ao carregar provider:', response.status);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar provider:', error);
+            }
+        }
+
+        // Atualizar checkmarks no dropdown
+        function updateProviderCheckmarks(currentProvider) {
+            const mysqlCheck = document.getElementById('mysql-check');
+            const oracleCheck = document.getElementById('oracle-check');
+
+            if (currentProvider === 'MySql') {
+                mysqlCheck.style.visibility = 'visible';
+                oracleCheck.style.visibility = 'hidden';
+                console.log('✅ MySQL selecionado');
+            } else if (currentProvider === 'Oracle') {
+                mysqlCheck.style.visibility = 'hidden';
+                oracleCheck.style.visibility = 'visible';
+                console.log('✅ Oracle selecionado');
+            }
+        }
+
+        // Trocar banco de dados
+        async function switchDatabase(provider, event) {
+            event.preventDefault();
+            console.log('Alternando para provider:', provider);
+
+            try {
+                const response = await fetch('/api/database/switch-provider', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ provider: provider })
+                });
+
+                if (response.ok) {
+                    updateProviderCheckmarks(provider);
+                    showToast(`✅ Banco de dados alterado para ${provider} com sucesso!`);
+                } else {
+                    const error = await response.json();
+                    showToast(`❌ ${error.message || 'Erro ao alterar banco de dados'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('❌ Erro ao alterar banco de dados', 'error');
+            }
+        }
+
+        // Mostrar informações de conexão
+        async function showConnectionInfo(event) {
+            event.preventDefault();
+            console.log('Carregando informações de conexão...');
+
+            try {
+                const response = await fetch('/api/database/connection-info', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Informações de conexão:', data);
+                    document.getElementById('provider-info').textContent = data.provider;
+                    document.getElementById('connection-string-info').textContent = data.connectionString;
+
+                    const statusBadge = document.getElementById('connection-status');
+                    if (data.isConnected) {
+                        statusBadge.innerHTML = '<span class="badge bg-success">✅ Conectado</span>';
+                    } else {
+                        statusBadge.innerHTML = '<span class="badge bg-danger">❌ Desconectado</span>';
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById('connectionModal'));
+                    modal.show();
+                } else {
+                    console.error('Erro ao carregar info:', response.status);
+                    showToast('❌ Erro ao carregar informações de conexão', 'error');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showToast('❌ Erro ao carregar informações de conexão', 'error');
+            }
+        }
+
+        // Mostrar toast de notificação
+        function showToast(message, type = 'success') {
+            const toastEl = document.getElementById('successToast');
+            const messageEl = document.getElementById('toast-message');
+            messageEl.textContent = message;
+
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
+        // Carregar provider ao abrir a página
+        document.addEventListener('DOMContentLoaded', loadCurrentProvider);
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>
