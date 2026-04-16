@@ -1,24 +1,26 @@
-﻿using ClinicaMedica.Consumidor.Services;
-using ClinicaMedica.Consumidor.ViewModels;
+﻿using ClinicaMedica.Consumidor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using ClinicaMedica.Consumidor.Services.Interfaces;
 
 namespace ClinicaMedica.Consumidor.Controllers
 {
     public class PacientesController : Controller
     {
-        private readonly PacienteService _pacienteService;
+        private readonly IApiService _api;
+        private readonly string _endpoint = "pacientes";
 
-        public PacientesController(PacienteService pacienteService)
+        public PacientesController(IApiService api)
         {
-            _pacienteService = pacienteService;
+            _api = api;
         }
 
-        // GET: Pacientes
+        // ================= INDEX =================
+
         public async Task<IActionResult> Index()
         {
             try
             {
-                var pacientes = await _pacienteService.ObterTodosAsync();
+                var pacientes = await _api.GetAllAsync<PacienteViewModel>(_endpoint);
                 return View(pacientes);
             }
             catch (Exception ex)
@@ -28,12 +30,13 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
         }
 
-        // GET: Pacientes/Details/5
+        // ================= DETAILS =================
+
         public async Task<IActionResult> Details(int id)
         {
             try
             {
-                var paciente = await _pacienteService.ObterPorIdAsync(id);
+                var paciente = await _api.GetByIdAsync<PacienteViewModel>(_endpoint, id);
 
                 if (paciente == null)
                 {
@@ -50,18 +53,13 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
         }
 
-        // GET: Pacientes/Create
+        // ================= CREATE =================
+
         public IActionResult Create()
         {
-            var model = new PacienteViewModel
-            {
-                Ativo = true
-            };
-
-            return View(model);
+            return View(new PacienteViewModel());
         }
 
-        // POST: Pacientes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(PacienteViewModel model)
@@ -71,34 +69,31 @@ namespace ClinicaMedica.Consumidor.Controllers
 
             try
             {
-                if (model.DataCadastro == default)
-                    model.DataCadastro = DateTime.Now;
+                var sucesso = await _api.PostAsync(_endpoint, model);
 
-                var response = await _pacienteService.AdicionarAsync(model);
-
-                if (response.IsSuccessStatusCode)
+                if (sucesso)
                 {
                     TempData["Sucesso"] = "Paciente cadastrado com sucesso.";
                     return RedirectToAction(nameof(Index));
                 }
 
-                var erroApi = await response.Content.ReadAsStringAsync();
-                ModelState.AddModelError(string.Empty, $"Erro ao cadastrar paciente. {erroApi}");
+                ModelState.AddModelError("", "Erro ao cadastrar paciente.");
                 return View(model);
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, $"Erro inesperado ao cadastrar paciente: {ex.Message}");
+                ModelState.AddModelError("", $"Erro inesperado: {ex.Message}");
                 return View(model);
             }
         }
 
-        // GET: Pacientes/Edit/5
+        // ================= EDIT =================
+
         public async Task<IActionResult> Edit(int id)
         {
             try
             {
-                var paciente = await _pacienteService.ObterPorIdAsync(id);
+                var paciente = await _api.GetByIdAsync<PacienteViewModel>(_endpoint, id);
 
                 if (paciente == null)
                 {
@@ -110,19 +105,18 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Erro"] = $"Erro ao carregar paciente para edição: {ex.Message}";
+                TempData["Erro"] = $"Erro ao carregar paciente: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
         }
 
-        // POST: Pacientes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, PacienteViewModel model)
         {
             if (id != model.Id)
             {
-                TempData["Erro"] = "ID inválido para edição.";
+                TempData["Erro"] = "ID inválido.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -131,37 +125,31 @@ namespace ClinicaMedica.Consumidor.Controllers
 
             try
             {
-                var pacienteOriginal = await _pacienteService.ObterPorIdAsync(id);
-                if (pacienteOriginal != null && model.DataCadastro == default)
-                {
-                    model.DataCadastro = pacienteOriginal.DataCadastro;
-                }
+                var sucesso = await _api.PutAsync<PacienteViewModel>(_endpoint, id, model);
 
-                var response = await _pacienteService.AtualizarAsync(id, model);
-
-                if (response.IsSuccessStatusCode)
+                if (sucesso)
                 {
                     TempData["Sucesso"] = "Paciente atualizado com sucesso.";
                     return RedirectToAction(nameof(Index));
                 }
 
-                var erroApi = await response.Content.ReadAsStringAsync();
-                ModelState.AddModelError(string.Empty, $"Erro ao atualizar paciente. {erroApi}");
+                ModelState.AddModelError("", "Erro ao atualizar paciente.");
                 return View(model);
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, $"Erro inesperado ao atualizar paciente: {ex.Message}");
+                ModelState.AddModelError("", $"Erro inesperado: {ex.Message}");
                 return View(model);
             }
         }
 
-        // GET: Pacientes/Delete/5
+        // ================= DELETE =================
+
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                var paciente = await _pacienteService.ObterPorIdAsync(id);
+                var paciente = await _api.GetByIdAsync<PacienteViewModel>(_endpoint, id);
 
                 if (paciente == null)
                 {
@@ -173,33 +161,33 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Erro"] = $"Erro ao carregar paciente para exclusão: {ex.Message}";
+                TempData["Erro"] = $"Erro ao carregar paciente: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
         }
 
-        // POST: Pacientes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {
-                var response = await _pacienteService.ExcluirAsync(id);
+                var sucesso = await _api.DeleteAsync(_endpoint, id);
 
-                if (response.IsSuccessStatusCode)
+                if (sucesso)
                 {
                     TempData["Sucesso"] = "Paciente excluído com sucesso.";
-                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    TempData["Erro"] = "Erro ao excluir paciente.";
                 }
 
-                var erroApi = await response.Content.ReadAsStringAsync();
-                TempData["Erro"] = $"Erro ao excluir paciente. {erroApi}";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
-                TempData["Erro"] = $"Erro inesperado ao excluir paciente: {ex.Message}";
+                TempData["Erro"] = $"Erro inesperado: {ex.Message}";
                 return RedirectToAction(nameof(Index));
             }
         }

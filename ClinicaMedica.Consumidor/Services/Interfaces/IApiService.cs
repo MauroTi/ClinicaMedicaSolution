@@ -1,0 +1,14 @@
+﻿public interface IApiService
+{
+    Task<List<T>> GetAllAsync<T>(string endpoint);
+
+    Task<T?> GetByIdAsync<T>(string endpoint, int id);
+
+    Task<bool> PostAsync<T>(string endpoint, T data);
+
+    Task<bool> PutAsync<T>(string endpoint, int id, T data);
+
+    Task<bool> DeleteAsync(string endpoint, int id);
+
+    void SetDatabase(string database);
+}

@@ -1,43 +1,85 @@
+using ClinicaMedica.Consumidor.Infrastructure.Http;
 using ClinicaMedica.Consumidor.Services;
+using ClinicaMedica.Consumidor.Services.Interfaces;
+using ClinicaMedica.Consumidor.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adiciona suporte a Controllers + Views
-builder.Services.AddControllersWithViews();
+#region 🔧 SERVICES
 
-// Registra o ApiService com HttpClient
-builder.Services.AddHttpClient<ApiService>(client =>
+// MVC + Filtro global de erro
+builder.Services.AddControllersWithViews(options =>
 {
-    // ⚠️ TROQUE A PORTA SE SUA API ESTIVER EM OUTRA
-    client.BaseAddress = new Uri("https://localhost:5001/");
-    client.Timeout = TimeSpan.FromSeconds(30);
+    options.Filters.Add<GlobalExceptionFilter>();
 });
 
-// ✅ Registra o MedicoService
-builder.Services.AddScoped<MedicoService>();
-builder.Services.AddScoped<PacienteService>();
-builder.Services.AddScoped<ConsultaService>();
+// HttpContext (necessário para Session e IUserContext)
+builder.Services.AddHttpContextAccessor();
+
+// Session (estado do usuário - escolha do banco)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(1);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Contexto do usuário (abstração da Session)
+builder.Services.AddScoped<IUserContext, UserContext>();
+
+// DelegatingHandler (injeta X-Database automaticamente)
+builder.Services.AddTransient<DatabaseDelegatingHandler>();
+
+// HttpClient + ApiService (sem lógica de banco)
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:5001/");
+});
+builder.Services.AddScoped<IMedicoService, MedicoService>();
+builder.Services.AddScoped<DatabaseFilter>();
+
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<DatabaseFilter>();
+});
+
+#endregion
 
 var app = builder.Build();
 
-// Pipeline de tratamento de erros
+#region 🌐 PIPELINE
+
+// Tratamento de erro global (produção)
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// Middlewares padrão
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
+// Session precisa vir antes de endpoints
+app.UseSession();
+
+// (Opcional) Autenticação futura
+// app.UseAuthentication();
+// app.UseAuthorization();
+
+#endregion
+
+#region 🛣️ ROTAS
+
+app.UseRouting();
+
 app.UseAuthorization();
 
-// Rota padrão MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+#endregion
 
 app.Run();

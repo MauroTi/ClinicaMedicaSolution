@@ -1,6 +1,7 @@
-﻿using ClinicaMedica.Consumidor.Services;
-using ClinicaMedica.Consumidor.ViewModels;
+﻿using ClinicaMedica.Consumidor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using ClinicaMedica.Consumidor.Services;
+using ClinicaMedica.Consumidor.Services.Implementations;
 
 namespace ClinicaMedica.Consumidor.Controllers
 {
@@ -13,6 +14,8 @@ namespace ClinicaMedica.Consumidor.Controllers
             _consultaService = consultaService;
         }
 
+        // ================= INDEX =================
+
         public async Task<IActionResult> Index()
         {
             try
@@ -22,10 +25,12 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
             catch (Exception ex)
             {
-                ViewData["ErroApi"] = ex.Message;
+                ViewData["ErroApi"] = $"Erro ao carregar consultas: {ex.Message}";
                 return View(new List<ConsultaViewModel>());
             }
         }
+
+        // ================= DETAILS =================
 
         public async Task<IActionResult> Details(int id)
         {
@@ -34,7 +39,10 @@ namespace ClinicaMedica.Consumidor.Controllers
                 var consulta = await _consultaService.ObterPorIdAsync(id);
 
                 if (consulta == null)
-                    return NotFound();
+                {
+                    TempData["Erro"] = "Consulta não encontrada.";
+                    return RedirectToAction(nameof(Index));
+                }
 
                 return View(consulta);
             }
@@ -45,6 +53,8 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
         }
 
+        // ================= CREATE =================
+
         public async Task<IActionResult> Create()
         {
             var model = new ConsultaViewModel
@@ -54,7 +64,15 @@ namespace ClinicaMedica.Consumidor.Controllers
                 Status = "Agendada"
             };
 
-            await _consultaService.PreencherListasAsync(model);
+            try
+            {
+                await _consultaService.PreencherListasAsync(model);
+            }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = $"Erro ao carregar dados auxiliares: {ex.Message}";
+            }
+
             return View(model);
         }
 
@@ -91,6 +109,8 @@ namespace ClinicaMedica.Consumidor.Controllers
             return View(model);
         }
 
+        // ================= EDIT =================
+
         public async Task<IActionResult> Edit(int id)
         {
             try
@@ -98,7 +118,10 @@ namespace ClinicaMedica.Consumidor.Controllers
                 var consulta = await _consultaService.ObterPorIdAsync(id);
 
                 if (consulta == null)
-                    return NotFound();
+                {
+                    TempData["Erro"] = "Consulta não encontrada.";
+                    return RedirectToAction(nameof(Index));
+                }
 
                 await _consultaService.PreencherListasAsync(consulta);
                 return View(consulta);
@@ -115,7 +138,10 @@ namespace ClinicaMedica.Consumidor.Controllers
         public async Task<IActionResult> Edit(int id, ConsultaViewModel model)
         {
             if (id != model.Id)
-                return BadRequest();
+            {
+                TempData["Erro"] = "ID inválido.";
+                return RedirectToAction(nameof(Index));
+            }
 
             if (!ModelState.IsValid)
             {
@@ -126,8 +152,12 @@ namespace ClinicaMedica.Consumidor.Controllers
             try
             {
                 var existente = await _consultaService.ObterPorIdAsync(id);
+
                 if (existente == null)
-                    return NotFound();
+                {
+                    TempData["Erro"] = "Consulta não encontrada.";
+                    return RedirectToAction(nameof(Index));
+                }
 
                 model.DataCadastro = existente.DataCadastro;
 
@@ -150,6 +180,8 @@ namespace ClinicaMedica.Consumidor.Controllers
             return View(model);
         }
 
+        // ================= DELETE =================
+
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -157,7 +189,10 @@ namespace ClinicaMedica.Consumidor.Controllers
                 var consulta = await _consultaService.ObterPorIdAsync(id);
 
                 if (consulta == null)
-                    return NotFound();
+                {
+                    TempData["Erro"] = "Consulta não encontrada.";
+                    return RedirectToAction(nameof(Index));
+                }
 
                 return View(consulta);
             }
@@ -193,10 +228,20 @@ namespace ClinicaMedica.Consumidor.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // ================= GRÁFICO =================
+
         public async Task<IActionResult> GraficoStatus()
         {
-            var dados = await _consultaService.ObterGraficoStatusAsync();
-            return View(dados);
+            try
+            {
+                var dados = await _consultaService.ObterGraficoStatusAsync();
+                return View(dados);
+            }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = $"Erro ao carregar gráfico: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }

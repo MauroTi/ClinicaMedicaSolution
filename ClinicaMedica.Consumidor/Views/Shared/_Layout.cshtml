@@ -1,5 +1,4 @@
-﻿@using Microsoft.AspNetCore.Mvc.Rendering
-
+﻿@using Microsoft.AspNetCore.Http
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -7,33 +6,81 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Clínica Médica</title>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
 </head>
 <body>
+    @{
+        var db = Context.Session.GetString("Database") ?? "mysql";
+    }
+
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand" href="@Url.Action("Index", "Home")">
+
+                <a class="navbar-brand"
+                   href="@Url.Action("Index", "Home", new { database = db })">
                     <i class="bi bi-heart-pulse-fill text-light"></i> Clínica
                 </a>
+
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
                 <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto align-items-center">
+
                         <li class="nav-item">
-                            <a class="nav-link @(IsActive("Consultas", "Index"))" href="@Url.Action("Index", "Consultas")">Consultas</a>
+                            <a class="nav-link @(IsActive("Consultas", "Index"))"
+                               href="@Url.Action("Index", "Consultas", new { database = db })">
+                                Consultas
+                            </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link @(IsActive("Medicos", "Index"))" href="@Url.Action("Index", "Medicos")">Médicos</a>
+                            <a class="nav-link @(IsActive("Medicos", "Index"))"
+                               href="@Url.Action("Index", "Medicos", new { database = db })">
+                                Médicos
+                            </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link @(IsActive("Pacientes", "Index"))" href="@Url.Action("Index", "Pacientes")">Pacientes</a>
+                            <a class="nav-link @(IsActive("Pacientes", "Index"))"
+                               href="@Url.Action("Index", "Pacientes", new { database = db })">
+                                Pacientes
+                            </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link @(IsActive("Consultas", "GraficoStatus"))" href="@Url.Action("GraficoStatus", "Consultas")">Gráficos</a>
+                            <a class="nav-link @(IsActive("Consultas", "GraficoStatus"))"
+                               href="@Url.Action("GraficoStatus", "Consultas", new { database = db })">
+                                Gráficos
+                            </a>
                         </li>
+
+                        <!-- 🔥 DROPDOWN BANCO -->
+                        <li class="nav-item ms-3">
+                            <form method="get" action="@Context.Request.Path">
+                                <select name="database"
+                                        class="form-select form-select-sm"
+                                        onchange="this.form.submit()">
+
+                                    @if (db == "mysql")
+                                    {
+                                        <option value="mysql" selected>MySQL</option>
+                                        <option value="oracle">Oracle</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="mysql">MySQL</option>
+                                        <option value="oracle" selected>Oracle</option>
+                                    }
+
+                                </select>
+                            </form>
+                        </li>
+
                     </ul>
                 </div>
             </div>
@@ -49,25 +96,24 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll("table").forEach(table => {
                 const headers = table.querySelectorAll("th");
                 let idIndex = -1;
 
-                // Encontra a coluna "ID"
                 headers.forEach((th, i) => {
-                    if(th.textContent.trim().toUpperCase() === "ID") {
+                    if (th.textContent.trim().toUpperCase() === "ID") {
                         idIndex = i;
-                        th.style.display = "none"; // oculta o th
+                        th.style.display = "none";
                     }
                 });
 
-                if(idIndex >= 0) {
-                    // Oculta todas as td da coluna ID
+                if (idIndex >= 0) {
                     table.querySelectorAll("tr").forEach(tr => {
                         const tds = tr.querySelectorAll("td");
-                        if(tds[idIndex]) {
+                        if (tds[idIndex]) {
                             tds[idIndex].style.display = "none";
                         }
                     });
@@ -84,6 +130,7 @@
             var routeData = ViewContext.RouteData;
             var currentAction = routeData.Values["action"]?.ToString();
             var currentController = routeData.Values["controller"]?.ToString();
+
             return (controller == currentController && action == currentAction) ? "active" : "";
         }
     }

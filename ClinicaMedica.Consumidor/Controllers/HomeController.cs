@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
-using ClinicaMedica.Consumidor.Services;
 using ClinicaMedica.Consumidor.ViewModels;
+using ClinicaMedica.Consumidor.Services.Interfaces;
 
 namespace ClinicaMedica.Consumidor.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ApiService _apiService;
+        private readonly IApiService _apiService;
 
-        public HomeController(ApiService apiService)
+        public HomeController(IApiService apiService)
         {
             _apiService = apiService;
         }
@@ -17,10 +17,9 @@ namespace ClinicaMedica.Consumidor.Controllers
         {
             try
             {
-                // AJUSTE ESTES ENDPOINTS CONFORME A SUA API REAL
-                var totalMedicos = await _apiService.GetAllAsync<object>("api/medicosApi");
-                var totalPacientes = await _apiService.GetAllAsync<object>("api/Pacientes");
-                var totalConsultas = await _apiService.GetAllAsync<object>("api/Consultas");
+                var totalMedicos = await _apiService.GetAllAsync<MedicoViewModel>("api/medicosApi");
+                var totalPacientes = await _apiService.GetAllAsync<PacienteViewModel>("api/pacientes");
+                var totalConsultas = await _apiService.GetAllAsync<ConsultaViewModel>("api/consultas");
 
                 var model = new HomeViewModel
                 {
@@ -33,15 +32,14 @@ namespace ClinicaMedica.Consumidor.Controllers
             }
             catch (Exception ex)
             {
-                var model = new HomeViewModel
+                ViewData["ErroApi"] = ex.Message;
+
+                return View(new HomeViewModel
                 {
                     TotalMedicos = 0,
                     TotalPacientes = 0,
                     TotalConsultas = 0
-                };
-
-                ViewData["ErroApi"] = ex.Message;
-                return View(model);
+                });
             }
         }
     }

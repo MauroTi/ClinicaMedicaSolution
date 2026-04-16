@@ -8,7 +8,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Infrastructure\NovaPasta\**" />
+    <Content Remove="Infrastructure\NovaPasta\**" />
+    <EmbeddedResource Remove="Infrastructure\NovaPasta\**" />
+    <None Remove="Infrastructure\NovaPasta\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Oracle.ManagedDataAccess" Version="21.21.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
   </ItemGroup>
 
 </Project>
