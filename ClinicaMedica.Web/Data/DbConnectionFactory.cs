@@ -11,6 +11,7 @@ namespace ClinicaMedica.Web.Data
         private readonly IDatabaseProviderResolver _resolver;
         private readonly IConfiguration _configuration;
         private readonly ILogger<DbConnectionFactory> _logger;
+        private DatabaseProvider? _cachedProvider;
 
         public DbConnectionFactory(
             IEnumerable<IDbConnectionProvider> providers,
@@ -30,9 +31,14 @@ namespace ClinicaMedica.Web.Data
 
         private DatabaseProvider GetCurrentProvider()
         {
-            var provider = _resolver.GetProvider();
-            _logger.LogInformation($"Provider atual: {provider}");
-            return provider;
+            if (_cachedProvider.HasValue)
+                return _cachedProvider.Value;
+
+            _cachedProvider = _resolver.GetProvider();
+
+            _logger.LogInformation($"Provider atual: {_cachedProvider.Value}");
+
+            return _cachedProvider.Value;
         }
 
         private IDbConnectionProvider GetProvider()

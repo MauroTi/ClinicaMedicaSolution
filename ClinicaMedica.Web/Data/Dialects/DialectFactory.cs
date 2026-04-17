@@ -1,27 +1,27 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using ClinicaMedica.Web.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace ClinicaMedica.Web.Data.Dialects
 {
     public class DialectFactory
     {
-        private readonly IConfiguration _config;
+        private readonly DatabaseSettings _settings;
 
-        public DialectFactory(IConfiguration config)
+        public DialectFactory(IOptions<DatabaseSettings> settings)
         {
-            _config = config;
+            _settings = settings.Value;
         }
 
         public ISqlDialect Criar()
         {
-            var provider = _config["DatabaseProvider"];
+            var provider = _settings.Provider?.Trim().ToLower();
 
-            if (provider == "MySql")
-                return new MySqlDialect();
-
-            if (provider == "Oracle")
-                return new OracleDialect();
-
-            throw new Exception("Dialeto não suportado");
+            return provider switch
+            {
+                "mysql" => new MySqlDialect(),
+                "oracle" => new OracleDialect(),
+                _ => throw new Exception($"Dialeto não suportado: {provider}")
+            };
         }
     }
 }

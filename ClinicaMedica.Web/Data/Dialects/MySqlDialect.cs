@@ -5,6 +5,8 @@
         public string PrefixoParametro => "@";
 
         public string Limite(int quantidade)
-            => $"LIMIT {quantidade}";
+        {
+            return $"LIMIT {quantidade}";
+        }
     }
 }

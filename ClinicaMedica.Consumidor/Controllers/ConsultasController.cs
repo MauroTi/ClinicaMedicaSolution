@@ -1,247 +1,246 @@
-﻿using ClinicaMedica.Consumidor.ViewModels;
+using ClinicaMedica.Consumidor.Helpers;
+using ClinicaMedica.Consumidor.Services.Interfaces;
+using ClinicaMedica.Consumidor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using ClinicaMedica.Consumidor.Services;
-using ClinicaMedica.Consumidor.Services.Implementations;
 
-namespace ClinicaMedica.Consumidor.Controllers
+namespace ClinicaMedica.Consumidor.Controllers;
+
+public class ConsultasController : Controller
 {
-    public class ConsultasController : Controller
+    private const int PageSize = 10;
+    private readonly IConsultaService _consultaService;
+
+    public ConsultasController(IConsultaService consultaService)
     {
-        private readonly ConsultaService _consultaService;
+        _consultaService = consultaService;
+    }
 
-        public ConsultasController(ConsultaService consultaService)
+    public async Task<IActionResult> Index(int page = 1)
+    {
+        try
         {
-            _consultaService = consultaService;
-        }
+            var consultas = await _consultaService.ObterTodosAsync();
+            var pagination = PaginationHelper.Create(page, consultas.Count, PageSize, HttpContext.Session.GetString("database"));
 
-        // ================= INDEX =================
-
-        public async Task<IActionResult> Index()
-        {
-            try
+            var model = new ConsultaIndexViewModel
             {
-                var consultas = await _consultaService.ObterTodosAsync();
-                return View(consultas);
-            }
-            catch (Exception ex)
-            {
-                ViewData["ErroApi"] = $"Erro ao carregar consultas: {ex.Message}";
-                return View(new List<ConsultaViewModel>());
-            }
-        }
-
-        // ================= DETAILS =================
-
-        public async Task<IActionResult> Details(int id)
-        {
-            try
-            {
-                var consulta = await _consultaService.ObterPorIdAsync(id);
-
-                if (consulta == null)
-                {
-                    TempData["Erro"] = "Consulta não encontrada.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                return View(consulta);
-            }
-            catch (Exception ex)
-            {
-                TempData["Erro"] = $"Erro ao carregar detalhes da consulta: {ex.Message}";
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        // ================= CREATE =================
-
-        public async Task<IActionResult> Create()
-        {
-            var model = new ConsultaViewModel
-            {
-                DataHoraConsulta = DateTime.Now,
-                DataCadastro = DateTime.Now,
-                Status = "Agendada"
+                Consultas = PaginationHelper.Slice(consultas, pagination.CurrentPage, PageSize),
+                Pagination = pagination
             };
 
-            try
-            {
-                await _consultaService.PreencherListasAsync(model);
-            }
-            catch (Exception ex)
-            {
-                TempData["Erro"] = $"Erro ao carregar dados auxiliares: {ex.Message}";
-            }
-
             return View(model);
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ConsultaViewModel model)
+        catch (Exception ex)
         {
-            if (!ModelState.IsValid)
+            ViewData["ErroApi"] = $"Erro ao carregar consultas: {ex.Message}";
+            return View(new ConsultaIndexViewModel
             {
-                await _consultaService.PreencherListasAsync(model);
-                return View(model);
+                Pagination = PaginationHelper.Create(1, 0, PageSize, HttpContext.Session.GetString("database"))
+            });
+        }
+    }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        try
+        {
+            var consulta = await _consultaService.ObterPorIdAsync(id);
+
+            if (consulta == null)
+            {
+                TempData["Erro"] = "Consulta não encontrada.";
+                return RedirectToAction(nameof(Index));
             }
 
-            try
-            {
-                model.DataCadastro = DateTime.Now;
+            return View(consulta);
+        }
+        catch (Exception ex)
+        {
+            TempData["Erro"] = $"Erro ao carregar detalhes da consulta: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
+    }
 
-                var sucesso = await _consultaService.CriarAsync(model);
+    public async Task<IActionResult> Create()
+    {
+        var model = new ConsultaViewModel
+        {
+            DataHoraConsulta = DateTime.Now,
+            DataCadastro = DateTime.Now,
+            Status = "Agendada"
+        };
 
-                if (sucesso)
-                {
-                    TempData["Sucesso"] = "Consulta cadastrada com sucesso!";
-                    return RedirectToAction(nameof(Index));
-                }
+        try
+        {
+            await _consultaService.PreencherListasAsync(model);
+        }
+        catch (Exception ex)
+        {
+            TempData["Erro"] = $"Erro ao carregar dados auxiliares: {ex.Message}";
+        }
 
-                ModelState.AddModelError(string.Empty, "Não foi possível cadastrar a consulta.");
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, $"Erro ao cadastrar consulta: {ex.Message}");
-            }
+        return View(model);
+    }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ConsultaViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
             await _consultaService.PreencherListasAsync(model);
             return View(model);
         }
 
-        // ================= EDIT =================
-
-        public async Task<IActionResult> Edit(int id)
+        try
         {
-            try
-            {
-                var consulta = await _consultaService.ObterPorIdAsync(id);
+            model.DataCadastro = DateTime.Now;
 
-                if (consulta == null)
-                {
-                    TempData["Erro"] = "Consulta não encontrada.";
-                    return RedirectToAction(nameof(Index));
-                }
+            var sucesso = await _consultaService.CriarAsync(model);
 
-                await _consultaService.PreencherListasAsync(consulta);
-                return View(consulta);
-            }
-            catch (Exception ex)
+            if (sucesso)
             {
-                TempData["Erro"] = $"Erro ao carregar consulta para edição: {ex.Message}";
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ConsultaViewModel model)
-        {
-            if (id != model.Id)
-            {
-                TempData["Erro"] = "ID inválido.";
+                TempData["Sucesso"] = "Consulta cadastrada com sucesso!";
                 return RedirectToAction(nameof(Index));
             }
 
-            if (!ModelState.IsValid)
-            {
-                await _consultaService.PreencherListasAsync(model);
-                return View(model);
-            }
-
-            try
-            {
-                var existente = await _consultaService.ObterPorIdAsync(id);
-
-                if (existente == null)
-                {
-                    TempData["Erro"] = "Consulta não encontrada.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                model.DataCadastro = existente.DataCadastro;
-
-                var sucesso = await _consultaService.AtualizarAsync(id, model);
-
-                if (sucesso)
-                {
-                    TempData["Sucesso"] = "Consulta atualizada com sucesso!";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                ModelState.AddModelError(string.Empty, "Não foi possível atualizar a consulta.");
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, $"Erro ao atualizar consulta: {ex.Message}");
-            }
-
-            await _consultaService.PreencherListasAsync(model);
-            return View(model);
+            ModelState.AddModelError(string.Empty, "Não foi possível cadastrar a consulta.");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"Erro ao cadastrar consulta: {ex.Message}");
         }
 
-        // ================= DELETE =================
+        await _consultaService.PreencherListasAsync(model);
+        return View(model);
+    }
 
-        public async Task<IActionResult> Delete(int id)
+    public async Task<IActionResult> Edit(int id)
+    {
+        try
         {
-            try
-            {
-                var consulta = await _consultaService.ObterPorIdAsync(id);
+            var consulta = await _consultaService.ObterPorIdAsync(id);
 
-                if (consulta == null)
-                {
-                    TempData["Erro"] = "Consulta não encontrada.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                return View(consulta);
-            }
-            catch (Exception ex)
+            if (consulta == null)
             {
-                TempData["Erro"] = $"Erro ao carregar consulta para exclusão: {ex.Message}";
+                TempData["Erro"] = "Consulta não encontrada.";
                 return RedirectToAction(nameof(Index));
             }
+
+            await _consultaService.PreencherListasAsync(consulta);
+            return View(consulta);
         }
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        catch (Exception ex)
         {
-            try
-            {
-                var sucesso = await _consultaService.ExcluirAsync(id);
+            TempData["Erro"] = $"Erro ao carregar consulta para edição: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
+    }
 
-                if (sucesso)
-                {
-                    TempData["Sucesso"] = "Consulta excluída com sucesso!";
-                }
-                else
-                {
-                    TempData["Erro"] = "Não foi possível excluir a consulta.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["Erro"] = $"Erro ao excluir consulta: {ex.Message}";
-            }
-
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ConsultaViewModel model)
+    {
+        if (id != model.Id)
+        {
+            TempData["Erro"] = "ID inválido.";
             return RedirectToAction(nameof(Index));
         }
 
-        // ================= GRÁFICO =================
-
-        public async Task<IActionResult> GraficoStatus()
+        if (!ModelState.IsValid)
         {
-            try
+            await _consultaService.PreencherListasAsync(model);
+            return View(model);
+        }
+
+        try
+        {
+            var existente = await _consultaService.ObterPorIdAsync(id);
+
+            if (existente == null)
             {
-                var dados = await _consultaService.ObterGraficoStatusAsync();
-                return View(dados);
-            }
-            catch (Exception ex)
-            {
-                TempData["Erro"] = $"Erro ao carregar gráfico: {ex.Message}";
+                TempData["Erro"] = "Consulta não encontrada.";
                 return RedirectToAction(nameof(Index));
             }
+
+            model.DataCadastro = existente.DataCadastro;
+
+            var sucesso = await _consultaService.AtualizarAsync(id, model);
+
+            if (sucesso)
+            {
+                TempData["Sucesso"] = "Consulta atualizada com sucesso!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ModelState.AddModelError(string.Empty, "Não foi possível atualizar a consulta.");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError(string.Empty, $"Erro ao atualizar consulta: {ex.Message}");
+        }
+
+        await _consultaService.PreencherListasAsync(model);
+        return View(model);
+    }
+
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var consulta = await _consultaService.ObterPorIdAsync(id);
+
+            if (consulta == null)
+            {
+                TempData["Erro"] = "Consulta não encontrada.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(consulta);
+        }
+        catch (Exception ex)
+        {
+            TempData["Erro"] = $"Erro ao carregar consulta para exclusão: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        try
+        {
+            var sucesso = await _consultaService.ExcluirAsync(id);
+
+            if (sucesso)
+            {
+                TempData["Sucesso"] = "Consulta excluída com sucesso!";
+            }
+            else
+            {
+                TempData["Erro"] = "Não foi possível excluir a consulta.";
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["Erro"] = $"Erro ao excluir consulta: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> GraficoStatus()
+    {
+        try
+        {
+            var dados = await _consultaService.ObterGraficoStatusAsync();
+            return View(dados);
+        }
+        catch (Exception ex)
+        {
+            TempData["Erro"] = $"Erro ao carregar gráfico: {ex.Message}";
+            return RedirectToAction(nameof(Index));
         }
     }
 }

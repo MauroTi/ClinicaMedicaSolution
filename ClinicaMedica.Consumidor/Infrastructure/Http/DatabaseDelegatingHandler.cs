@@ -1,6 +1,4 @@
-﻿using System.Net.Http.Headers;
-
-public class DatabaseDelegatingHandler : DelegatingHandler
+﻿public class DatabaseDelegatingHandler : DelegatingHandler
 {
     private readonly IUserContext _userContext;
 

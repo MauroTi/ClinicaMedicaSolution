@@ -7,6 +7,7 @@ public interface IConsultaService
 {
     Task<IEnumerable<Consulta>> ObterTodosAsync();
     Task<IEnumerable<ConsultaDto>> ObterTodosDetalhadosAsync();
+    Task<IDictionary<string, int>> ObterStatusAgrupadoAsync();
     Task<Consulta?> ObterPorIdAsync(int id);
     Task<int> InserirAsync(Consulta consulta);
     Task<bool> AtualizarAsync(Consulta consulta);

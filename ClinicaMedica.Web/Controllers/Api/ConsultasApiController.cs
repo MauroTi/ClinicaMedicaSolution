@@ -23,6 +23,13 @@ namespace ClinicaMedica.Web.Controllers.Api
             return Ok(consultas);
         }
 
+        [HttpGet("grafico-status")]
+        public async Task<IActionResult> ObterGraficoStatus()
+        {
+            var dados = await _consultaService.ObterStatusAgrupadoAsync();
+            return Ok(dados);
+        }
+
         // GET: api/Consultas/5
         [HttpGet("{id}")]
         public async Task<IActionResult> ObterPorId(int id)

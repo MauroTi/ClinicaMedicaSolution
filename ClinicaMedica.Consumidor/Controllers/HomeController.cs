@@ -1,6 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using ClinicaMedica.Consumidor.ViewModels;
-using ClinicaMedica.Consumidor.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicaMedica.Consumidor.Controllers
 {
@@ -17,9 +16,12 @@ namespace ClinicaMedica.Consumidor.Controllers
         {
             try
             {
-                var totalMedicos = await _apiService.GetAllAsync<MedicoViewModel>("api/medicosApi");
-                var totalPacientes = await _apiService.GetAllAsync<PacienteViewModel>("api/pacientes");
-                var totalConsultas = await _apiService.GetAllAsync<ConsultaViewModel>("api/consultas");
+                var database = HttpContext.Session.GetString("database") ?? "mysql";
+                _apiService.SetDatabase(database);
+
+                var totalMedicos = await _apiService.GetAllAsync<MedicoViewModel>("medicosApi");
+                var totalPacientes = await _apiService.GetAllAsync<PacienteViewModel>("pacientes");
+                var totalConsultas = await _apiService.GetAllAsync<ConsultaViewModel>("consultas");
 
                 var model = new HomeViewModel
                 {

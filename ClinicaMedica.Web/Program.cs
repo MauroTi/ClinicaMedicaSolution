@@ -1,16 +1,16 @@
 using ClinicaMedica.Web.Configuration;
-using ClinicaMedica.Web.Data;
+using ClinicaMedica.Web.Core.Entities;
 using ClinicaMedica.Web.Daos;
 using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.Data;
+using ClinicaMedica.Web.Data.Dialects;
+using ClinicaMedica.Web.Infrastructure.Database.Providers;
 using ClinicaMedica.Web.Infrastructure.Repositories;
 using ClinicaMedica.Web.Services;
 using ClinicaMedica.Web.Services.Interfaces;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
-using ClinicaMedica.Web.Core.Entities;
-using ClinicaMedica.Web.Infrastructure.Database.Providers;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,14 +21,19 @@ builder.Services.Configure<DatabaseSettings>(
     builder.Configuration.GetSection("DatabaseSettings"));
 
 // ========================
-// Infrastructure
+// Infraestrutura
 // ========================
 builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddScoped<IDatabaseProviderResolver, DatabaseProviderResolver>();
+
 builder.Services.AddScoped<IDbConnectionProvider, MySqlConnectionProvider>();
 builder.Services.AddScoped<IDbConnectionProvider, OracleConnectionProvider>();
+
 builder.Services.AddScoped<DbConnectionFactory>();
 
+// 🔥 CORRETO: evitar duplicação
+builder.Services.AddScoped<DialectFactory>();
 
 // ========================
 // Repositories
@@ -36,7 +41,7 @@ builder.Services.AddScoped<DbConnectionFactory>();
 builder.Services.AddScoped<IGenericRepository<Medico>, MedicoRepository>();
 
 // ========================
-// DAOs (Mantém compatibilidade)
+// DAOs
 // ========================
 builder.Services.AddScoped<IDashboardDao, DashboardDao>();
 builder.Services.AddScoped<IMedicoDao, MedicoDao>();
@@ -44,7 +49,7 @@ builder.Services.AddScoped<IPacienteDao, PacienteDao>();
 builder.Services.AddScoped<IConsultaDao, ConsultaDao>();
 
 // ========================
-// Services
+// Services (negócio)
 // ========================
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<MedicoService>();
@@ -56,16 +61,15 @@ builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddScoped<IConsultaService, ConsultaService>();
 
 // ========================
-// Services de Configuração
+// Config Service
 // ========================
-IServiceCollection serviceCollection = builder.Services.AddScoped<IDatabaseConfigurationService, DatabaseConfigurationService>();
+builder.Services.AddScoped<IDatabaseConfigurationService, DatabaseConfigurationService>();
 
 // ========================
-// MVC & Pages
+// MVC
 // ========================
-builder.Services.AddControllers();
-builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
 // ========================
 // CORS
@@ -74,9 +78,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowConsumer", policy =>
     {
-        policy.WithOrigins("http://localhost:8082")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .WithOrigins("http://localhost:8082")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
@@ -85,38 +90,48 @@ builder.Services.AddCors(options =>
 // ========================
 var keysFolder = @"C:\Projetos\ClinicaMedica\publish\Keys";
 Directory.CreateDirectory(keysFolder);
+
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keysFolder))
     .SetApplicationName("ClinicaMedica");
 
+// ========================
+// BUILD APP
+// ========================
 var app = builder.Build();
 
 // ========================
 // Middleware
 // ========================
 var ptBR = new CultureInfo("pt-BR");
-var localizationOptions = new RequestLocalizationOptions
+
+app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture(ptBR),
     SupportedCultures = new List<CultureInfo> { ptBR },
     SupportedUICultures = new List<CultureInfo> { ptBR }
-};
+});
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+else
+{
+    app.UseDeveloperExceptionPage();
+}
 
 app.UseStaticFiles();
-app.UseRequestLocalization(localizationOptions);
+
 app.UseRouting();
+
 app.UseCors("AllowConsumer");
+
 app.UseAuthorization();
 
 // ========================
-// Rotas
+// ROTAS
 // ========================
 app.MapControllerRoute(
     name: "default",

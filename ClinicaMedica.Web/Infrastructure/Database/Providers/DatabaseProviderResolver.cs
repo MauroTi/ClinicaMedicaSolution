@@ -23,8 +23,13 @@ namespace ClinicaMedica.Web.Infrastructure.Database.Providers
         {
             var ctx = _httpContextAccessor.HttpContext;
 
-            if (ctx == null)
-                return DatabaseProvider.MySql;
+            var query = ctx.Request.Query["database"].ToString();
+
+            if (!string.IsNullOrWhiteSpace(query) &&
+                Enum.TryParse(query, true, out DatabaseProvider qp))
+            {
+                return qp;
+            }
 
             // 🔥 1. HEADER (PRIORIDADE REAL DO CONSUMER)
             if (ctx.Request.Headers.TryGetValue("X-Database", out var headerValue))

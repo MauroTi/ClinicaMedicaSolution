@@ -1,7 +1,8 @@
-﻿@model IEnumerable<ClinicaMedica.Consumidor.ViewModels.ConsultaViewModel>
+@model ClinicaMedica.Consumidor.ViewModels.ConsultaIndexViewModel
 
 @{
     ViewData["Title"] = "Consultas";
+    var db = Model.Pagination.Database;
 }
 
 <h2>Consultas</h2>
@@ -25,14 +26,14 @@
 }
 
 <p>
-    <a asp-action="Create" class="btn btn-primary mb-3">Nova Consulta</a>
+    <a asp-action="Create" asp-route-database="@db" class="btn btn-primary mb-3">Nova Consulta</a>
 </p>
 
 <div class="table-responsive">
     <table class="table table-striped table-bordered align-middle w-100">
         <thead class="table-light">
             <tr>
-                <th style="display:none;">ID</th> <!-- Coluna ID escondida -->
+                <th style="display:none;">ID</th>
                 <th>Médico</th>
                 <th>Paciente</th>
                 <th>Data/Hora</th>
@@ -40,37 +41,30 @@
                 <th>Status</th>
                 <th>Observações</th>
                 <th>Data Cadastro</th>
-                <th><!-- Ações não precisa de header --></th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @if (Model != null && Model.Any())
+            @if (Model.Consultas.Any())
             {
-                foreach (var consulta in Model)
+                foreach (var consulta in Model.Consultas)
                 {
                     <tr>
-                        <td style="display:none;">@consulta.Id</td> <!-- ID escondido -->
+                        <td style="display:none;">@consulta.Id</td>
                         <td>@consulta.NomeMedico</td>
                         <td>@consulta.NomePaciente</td>
                         <td>@consulta.DataHoraConsulta.ToString("dd/MM/yyyy HH:mm")</td>
                         <td>@consulta.Valor.ToString("C")</td>
                         <td>@consulta.Status</td>
-                        <td style="max-width: 160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
-                            title="@consulta.Observacoes">
+                        <td style="max-width: 160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@consulta.Observacoes">
                             @consulta.Observacoes
                         </td>
                         <td>@consulta.DataCadastro.ToString("dd/MM/yyyy HH:mm")</td>
                         <td class="text-center">
                             <div class="d-flex gap-1 justify-content-center" style="flex-wrap:nowrap;">
-                                <a class="btn btn-primary btn-sm"
-                                   href="@Url.Action("Details", "Consultas", new { id = consulta.Id })"
-                                   style="white-space:nowrap; min-width:60px; flex-shrink:1;">Detalhes</a>
-                                <a class="btn btn-warning btn-sm"
-                                   href="@Url.Action("Edit", "Consultas", new { id = consulta.Id })"
-                                   style="white-space:nowrap; min-width:60px; flex-shrink:1;">Editar</a>
-                                <a class="btn btn-danger btn-sm"
-                                   href="@Url.Action("Delete", "Consultas", new { id = consulta.Id })"
-                                   style="white-space:nowrap; min-width:60px; flex-shrink:1;">Excluir</a>
+                                <a asp-action="Details" asp-route-id="@consulta.Id" asp-route-database="@db" class="btn btn-primary btn-sm" style="white-space:nowrap; min-width:60px; flex-shrink:1;">Detalhes</a>
+                                <a asp-action="Edit" asp-route-id="@consulta.Id" asp-route-database="@db" class="btn btn-warning btn-sm" style="white-space:nowrap; min-width:60px; flex-shrink:1;">Editar</a>
+                                <a asp-action="Delete" asp-route-id="@consulta.Id" asp-route-database="@db" class="btn btn-danger btn-sm" style="white-space:nowrap; min-width:60px; flex-shrink:1;">Excluir</a>
                             </div>
                         </td>
                     </tr>
@@ -85,3 +79,5 @@
         </tbody>
     </table>
 </div>
+
+<partial name="_Pagination" model="Model.Pagination" />

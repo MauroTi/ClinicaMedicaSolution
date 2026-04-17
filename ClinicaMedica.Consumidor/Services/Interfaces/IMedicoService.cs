@@ -1,8 +1,10 @@
-﻿using ClinicaMedica.Consumidor.ViewModels;
+using ClinicaMedica.Consumidor.ViewModels;
 
 public interface IMedicoService
 {
     Task<List<MedicoViewModel>> ObterTodosAsync();
-    Task<MedicoViewModel> ObterPorIdAsync(int id);
-    Task CriarAsync(MedicoViewModel model);
+    Task<MedicoViewModel?> ObterPorIdAsync(int id);
+    Task<bool> CriarAsync(MedicoViewModel model);
+    Task<bool> AtualizarAsync(int id, MedicoViewModel model);
+    Task<bool> ExcluirAsync(int id);
 }

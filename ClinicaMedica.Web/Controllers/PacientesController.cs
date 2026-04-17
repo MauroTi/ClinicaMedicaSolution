@@ -1,138 +1,137 @@
-﻿using ClinicaMedica.Web.Models;
+using ClinicaMedica.Web.Helpers;
+using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
 using ClinicaMedica.Web.ViewModels.Pacientes;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ClinicaMedica.Web.Controllers
+namespace ClinicaMedica.Web.Controllers;
+
+public class PacientesController : Controller
 {
-    public class PacientesController : Controller
+    private const int PageSize = 10;
+    private readonly IPacienteService _pacienteService;
+
+    public PacientesController(IPacienteService pacienteService)
     {
-        private readonly IPacienteService _pacienteService;
+        _pacienteService = pacienteService;
+    }
 
-        public PacientesController(IPacienteService pacienteService)
+    public async Task<IActionResult> Index(int page = 1)
+    {
+        var pacientes = (await _pacienteService.ObterTodosAsync()).ToList();
+        var pagination = PaginationHelper.Create(page, pacientes.Count, PageSize);
+
+        var viewModel = new PacienteIndexViewModel
         {
-            _pacienteService = pacienteService;
+            Pacientes = PaginationHelper.Slice(pacientes, pagination.CurrentPage, PageSize),
+            Pagination = pagination
+        };
+
+        return View(viewModel);
+    }
+
+    public IActionResult Create()
+    {
+        return View(new PacienteFormViewModel
+        {
+            DataNascimento = DateTime.Today,
+            Ativo = true,
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(PacienteFormViewModel vm)
+    {
+        if (string.IsNullOrWhiteSpace(vm.Cpf))
+        {
+            ModelState.AddModelError("Cpf", "O CPF é obrigatório.");
         }
 
-        public async Task<IActionResult> Index()
+        if (await _pacienteService.ExisteCpfAsync(vm.Cpf))
         {
-            // Chama o serviço assíncrono
-            IEnumerable<Paciente> pacientesEnumerable = await _pacienteService.ObterTodosAsync();
-
-            // Converte para List e coloca no ViewModel
-            var viewModel = new PacienteIndexViewModel
-            {
-                Pacientes = pacientesEnumerable.ToList()
-            };
-
-            return View(viewModel); // Passa o ViewModel correto
+            ModelState.AddModelError("Cpf", "Este CPF já está cadastrado.");
         }
 
-        public IActionResult Create()
-        {
-            return View(new PacienteFormViewModel
-            {
-                DataNascimento = DateTime.Today,
-                Ativo = true,
-
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PacienteFormViewModel vm)
-        {
-            if (string.IsNullOrWhiteSpace(vm.Cpf))
-            {
-                ModelState.AddModelError("Cpf", "O CPF é obrigatório.");
-            }
-
-            // ✅ valida CPF duplicado
-            if (await _pacienteService.ExisteCpfAsync(vm.Cpf))
-            {
-                ModelState.AddModelError("Cpf", "Este CPF já está cadastrado.");
-            }
-
-            if (!ModelState.IsValid)
-                return View(vm);
-
-            var paciente = new Paciente
-            {
-                Nome = vm.Nome,
-                Cpf = vm.Cpf,
-                Telefone = vm.Telefone,
-                Email = vm.Email,
-                DataNascimento = vm.DataNascimento,
-                Ativo = vm.Ativo,
-                DataCadastro = DateTime.Now
-            };
-
-            await _pacienteService.AdicionarAsync(paciente);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Edit(int id)
-        {
-            var paciente = await _pacienteService.ObterPorIdAsync(id);
-            if (paciente == null) return NotFound();
-
-            var vm = new PacienteFormViewModel
-            {
-                Id = paciente.Id,
-                Nome = paciente.Nome,
-                Cpf = paciente.Cpf,
-                Telefone = paciente.Telefone,
-                Email = paciente.Email,
-                DataNascimento = paciente.DataNascimento,
-                Ativo = paciente.Ativo
-            };
-
+        if (!ModelState.IsValid)
             return View(vm);
-        }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(PacienteFormViewModel vm)
+        var paciente = new Paciente
         {
-            if (!ModelState.IsValid)
-                return View(vm);
+            Nome = vm.Nome,
+            Cpf = vm.Cpf,
+            Telefone = vm.Telefone,
+            Email = vm.Email,
+            DataNascimento = vm.DataNascimento,
+            Ativo = vm.Ativo,
+            DataCadastro = DateTime.Now
+        };
 
-            var paciente = await _pacienteService.ObterPorIdAsync(vm.Id);
-            if (paciente == null) return NotFound();
+        await _pacienteService.AdicionarAsync(paciente);
+        return RedirectToAction(nameof(Index));
+    }
 
-            paciente.Nome = vm.Nome;
-            paciente.Cpf = vm.Cpf;
-            paciente.Telefone = vm.Telefone;
-            paciente.Email = vm.Email;
-            paciente.DataNascimento = vm.DataNascimento;
-            paciente.Ativo = vm.Ativo;
+    public async Task<IActionResult> Edit(int id)
+    {
+        var paciente = await _pacienteService.ObterPorIdAsync(id);
+        if (paciente == null) return NotFound();
 
-            await _pacienteService.AtualizarAsync(paciente);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public async Task<IActionResult> Details(int id)
+        var vm = new PacienteFormViewModel
         {
-            var paciente = await _pacienteService.ObterPorIdAsync(id);
-            if (paciente == null) return NotFound();
+            Id = paciente.Id,
+            Nome = paciente.Nome,
+            Cpf = paciente.Cpf,
+            Telefone = paciente.Telefone,
+            Email = paciente.Email,
+            DataNascimento = paciente.DataNascimento,
+            Ativo = paciente.Ativo
+        };
 
-            return View(paciente);
-        }
+        return View(vm);
+    }
 
-        public async Task<IActionResult> Delete(int id)
-        {
-            var paciente = await _pacienteService.ObterPorIdAsync(id);
-            if (paciente == null) return NotFound();
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(PacienteFormViewModel vm)
+    {
+        if (!ModelState.IsValid)
+            return View(vm);
 
-            return View(paciente);
-        }
+        var paciente = await _pacienteService.ObterPorIdAsync(vm.Id);
+        if (paciente == null) return NotFound();
 
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            await _pacienteService.ExcluirAsync(id);
-            return RedirectToAction(nameof(Index));
-        }
+        paciente.Nome = vm.Nome;
+        paciente.Cpf = vm.Cpf;
+        paciente.Telefone = vm.Telefone;
+        paciente.Email = vm.Email;
+        paciente.DataNascimento = vm.DataNascimento;
+        paciente.Ativo = vm.Ativo;
+
+        await _pacienteService.AtualizarAsync(paciente);
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var paciente = await _pacienteService.ObterPorIdAsync(id);
+        if (paciente == null) return NotFound();
+
+        return View(paciente);
+    }
+
+    public async Task<IActionResult> Delete(int id)
+    {
+        var paciente = await _pacienteService.ObterPorIdAsync(id);
+        if (paciente == null) return NotFound();
+
+        return View(paciente);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        await _pacienteService.ExcluirAsync(id);
+        return RedirectToAction(nameof(Index));
     }
 }

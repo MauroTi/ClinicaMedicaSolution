@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
+using ClinicaMedica.Web.ViewModels.Shared;
 
-namespace ClinicaMedica.Web.ViewModels.Pacientes
+namespace ClinicaMedica.Web.ViewModels.Pacientes;
+
+public class PacienteIndexViewModel
 {
-    public class PacienteIndexViewModel
-    {
-        // Use o namespace completo para evitar conflito com o namespace Paciente
-        public List<ClinicaMedica.Web.Models.Paciente> Pacientes { get; set; } = new List<ClinicaMedica.Web.Models.Paciente>();
-    }
+    public List<ClinicaMedica.Web.Models.Paciente> Pacientes { get; set; } = new();
+    public PaginationViewModel Pagination { get; set; } = new();
 }

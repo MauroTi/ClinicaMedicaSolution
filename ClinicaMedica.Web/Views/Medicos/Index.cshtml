@@ -1,4 +1,4 @@
-﻿@model ClinicaMedica.Web.ViewModels.Medicos.MedicoIndexViewModel
+@model ClinicaMedica.Web.ViewModels.Medicos.MedicoIndexViewModel
 
 @{
     ViewData["Title"] = "Médicos";
@@ -29,23 +29,34 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model.Medicos)
+            @if (Model.Medicos.Any())
+            {
+                foreach (var item in Model.Medicos)
+                {
+                    <tr>
+                        <td>@item.Nome</td>
+                        <td>@item.Especialidade</td>
+                        <td>@item.Crm</td>
+                        <td>@item.Telefone</td>
+                        <td>@item.Email</td>
+                        <td>@(item.Ativo ? "Sim" : "Não")</td>
+                        <td>@item.DataCadastro.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Detalhes</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Editar</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Excluir</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
             {
                 <tr>
-                    <td>@item.Nome</td>
-                    <td>@item.Especialidade</td>
-                    <td>@item.Crm</td>
-                    <td>@item.Telefone</td>
-                    <td>@item.Email</td>
-                    <td>@(item.Ativo ? "Sim" : "Não")</td>
-                    <td>@item.DataCadastro.ToString("dd/MM/yyyy HH:mm")</td>
-                    <td>
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">Detalhes</a>
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Editar</a>
-                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">Excluir</a>
-                    </td>
+                    <td colspan="8" class="text-center">Nenhum médico encontrado.</td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <partial name="_Pagination" model="Model.Pagination" />
 </div>

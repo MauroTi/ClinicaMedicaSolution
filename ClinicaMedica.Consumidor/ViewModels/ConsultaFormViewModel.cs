@@ -1,6 +1,5 @@
 ﻿using ClinicaMedica.Consumidor.Models;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace ClinicaMedica.Consumidor.ViewModels

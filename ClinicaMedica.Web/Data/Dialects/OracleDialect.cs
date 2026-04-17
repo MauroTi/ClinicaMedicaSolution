@@ -5,6 +5,8 @@
         public string PrefixoParametro => ":";
 
         public string Limite(int quantidade)
-            => $"FETCH FIRST {quantidade} ROWS ONLY";
+        {
+            return $"FETCH FIRST {quantidade} ROWS ONLY";
+        }
     }
 }

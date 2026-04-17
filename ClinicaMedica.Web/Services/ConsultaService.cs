@@ -24,6 +24,15 @@ namespace ClinicaMedica.Web.Services
             return await _consultaDao.ObterTodosDetalhadosAsync();
         }
 
+        public async Task<IDictionary<string, int>> ObterStatusAgrupadoAsync()
+        {
+            var consultas = await _consultaDao.ObterTodosAsync();
+
+            return consultas
+                .GroupBy(c => string.IsNullOrWhiteSpace(c.Status) ? "Sem status" : c.Status.Trim())
+                .ToDictionary(g => g.Key, g => g.Count());
+        }
+
         public async Task<Consulta?> ObterPorIdAsync(int id)
         {
             return await _consultaDao.ObterPorIdAsync(id);

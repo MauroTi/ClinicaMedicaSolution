@@ -1,7 +1,8 @@
-using ClinicaMedica.Consumidor.Infrastructure.Http;
-using ClinicaMedica.Consumidor.Services;
-using ClinicaMedica.Consumidor.Services.Interfaces;
 using ClinicaMedica.Consumidor.Filters;
+using ClinicaMedica.Consumidor.Infrastructure.Http;
+using ClinicaMedica.Consumidor.Services.Implementations;
+using ClinicaMedica.Consumidor.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,11 +35,12 @@ builder.Services.AddTransient<DatabaseDelegatingHandler>();
 builder.Services.AddHttpClient<IApiService, ApiService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:5001/");
-});
+})
+.AddHttpMessageHandler<DatabaseDelegatingHandler>();
 builder.Services.AddScoped<IMedicoService, MedicoService>();
+builder.Services.AddScoped<IConsultaService, ConsultaService>();
 builder.Services.AddScoped<DatabaseFilter>();
-
-builder.Services.AddControllersWithViews(options =>
+builder.Services.Configure<MvcOptions>(options =>
 {
     options.Filters.Add<DatabaseFilter>();
 });
@@ -58,8 +60,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
-app.UseRouting();
 
 // Session precisa vir antes de endpoints
 app.UseSession();

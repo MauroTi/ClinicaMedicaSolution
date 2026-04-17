@@ -11,5 +11,8 @@
         <partial name="_Form" model="Model" />
     </div>
 
-    <a asp-action="Index" class="btn btn-secondary mt-3">Voltar</a>
+    <div class="mt-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+        <a asp-action="Index" class="btn btn-secondary">Voltar</a>
+    </div>
 </div>
