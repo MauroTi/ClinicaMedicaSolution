@@ -1,31 +1,26 @@
+using ClinicaMedica.Consumidor.Infrastructure.Database;
 using Microsoft.AspNetCore.Mvc.Filters;
+
+namespace ClinicaMedica.Consumidor.Filters;
 
 public class DatabaseFilter : IActionFilter
 {
-    private readonly IApiService _api;
-    private const string SessionKey = "database";
-
-    public DatabaseFilter(IApiService api)
-    {
-        _api = api;
-    }
-
     public void OnActionExecuting(ActionExecutingContext context)
     {
         var httpContext = context.HttpContext;
-        var database = httpContext.Request.Query["database"].ToString();
+        var databaseFromQuery = httpContext.Request.Query[DatabaseSession.SessionKey].ToString();
+        var normalizedDatabase = DatabaseSession.Normalize(databaseFromQuery);
 
-        if (!string.IsNullOrWhiteSpace(database))
+        if (string.IsNullOrWhiteSpace(databaseFromQuery))
         {
-            httpContext.Session.SetString(SessionKey, database);
-        }
-        else
-        {
-            database = httpContext.Session.GetString(SessionKey) ?? "mysql";
+            normalizedDatabase = DatabaseSession.Normalize(httpContext.Session.GetString(DatabaseSession.SessionKey));
         }
 
-        _api.SetDatabase(database);
+        httpContext.Session.SetString(DatabaseSession.SessionKey, normalizedDatabase);
     }
 
-    public void OnActionExecuted(ActionExecutedContext context) { }
+    public void OnActionExecuted(ActionExecutedContext context)
+    {
+    }
+
 }

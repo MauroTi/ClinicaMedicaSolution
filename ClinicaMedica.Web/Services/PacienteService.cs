@@ -1,4 +1,5 @@
-﻿using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.Infrastructure.Database;
 using ClinicaMedica.Web.Models;
 using ClinicaMedica.Web.Services.Interfaces;
 
@@ -13,44 +14,47 @@ public class PacienteService : IPacienteService
         _pacienteDao = pacienteDao;
     }
 
-    public async Task<IEnumerable<Paciente>> ObterTodosAsync()
-    {
-        return await _pacienteDao.ObterTodos();
-    }
+    public Task<IEnumerable<Paciente>> ObterTodosAsync() => _pacienteDao.ObterTodos();
 
-    public async Task<Paciente?> ObterPorIdAsync(int id)
-    {
-        return await _pacienteDao.ObterPorId(id);
-    }
-
-    public async Task CriarAsync(Paciente model)
-    {
-        await _pacienteDao.CriarAsync(model);
-    }
-
-    public async Task<bool> EditarAsync(Paciente model)
-    {
-        return await _pacienteDao.EditarAsync(model);
-    }
+    public Task<Paciente?> ObterPorIdAsync(int id) => _pacienteDao.ObterPorId(id);
 
     public async Task<bool> ExcluirAsync(int id)
     {
-        return await _pacienteDao.ExcluirAsync(id);
+        try
+        {
+            return await _pacienteDao.ExcluirAsync(id);
+        }
+        catch (Exception ex) when (DatabaseExceptionTranslator.IsReferenceConstraintViolation(ex))
+        {
+            throw new InvalidOperationException("Não é possível excluir o paciente porque existem consultas vinculadas a ele.");
+        }
     }
 
-    public async Task<bool> ExisteCpfAsync(string cpf)
+    public Task<bool> ExisteCpfAsync(string cpf) => _pacienteDao.ExisteCpfAsync(cpf);
+
+    public async Task<int> AdicionarAsync(Paciente model)
     {
-        return await _pacienteDao.ExisteCpfAsync(cpf);
+        if (model.DataCadastro == default)
+            model.DataCadastro = DateTime.Now;
+
+        var existente = await _pacienteDao.ObterPorCpfAsync(model.Cpf);
+        if (existente is not null)
+            throw new InvalidOperationException($"O CPF {model.Cpf} já está cadastrado.");
+
+        var id = await _pacienteDao.CriarAsync(model);
+        model.Id = id;
+        return id;
     }
 
-    public Task<int> AdicionarAsync(Paciente model)
+    public async Task<bool> AtualizarAsync(Paciente model)
     {
-        return _pacienteDao.CriarAsync(model)
-            .ContinueWith(_ => 1);
-    }
+        if (model.DataCadastro == default)
+            model.DataCadastro = DateTime.Now;
 
-    public Task<bool> AtualizarAsync(Paciente model)
-    {
-        return _pacienteDao.EditarAsync(model);
+        var existente = await _pacienteDao.ObterPorCpfAsync(model.Cpf);
+        if (existente is not null && existente.Id != model.Id)
+            throw new InvalidOperationException($"O CPF {model.Cpf} já está cadastrado para outro paciente.");
+
+        return await _pacienteDao.EditarAsync(model);
     }
 }

@@ -1,5 +1,7 @@
 using ClinicaMedica.Consumidor.ViewModels;
 
+namespace ClinicaMedica.Consumidor.Services.Interfaces;
+
 public interface IMedicoService
 {
     Task<List<MedicoViewModel>> ObterTodosAsync();

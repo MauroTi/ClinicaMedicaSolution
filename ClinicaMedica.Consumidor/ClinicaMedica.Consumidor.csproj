@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-<StaticWebAssetBasePath>consumidor</StaticWebAssetBasePath>
+    <StaticWebAssetBasePath>consumidor</StaticWebAssetBasePath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,10 +12,6 @@
     <Content Remove="Infrastructure\NovaPasta\**" />
     <EmbeddedResource Remove="Infrastructure\NovaPasta\**" />
     <None Remove="Infrastructure\NovaPasta\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Oracle.ManagedDataAccess" Version="21.21.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,24 +1,67 @@
-﻿using System.Text;
+using ClinicaMedica.Consumidor.Services.Interfaces;
+using System.Net.Http.Json;
 using System.Text.Json;
+
+namespace ClinicaMedica.Consumidor.Services;
 
 public class ApiService : IApiService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly HttpClient _http;
-    private string _database = "mysql";
 
     public ApiService(HttpClient http)
     {
         _http = http;
     }
 
-    public void SetDatabase(string database)
+    public async Task<T?> GetAsync<T>(string endpoint)
     {
-        _database = string.IsNullOrWhiteSpace(database)
-            ? "mysql"
-            : database.Trim().ToLowerInvariant();
+        return await SendAsync<T>(() => _http.GetAsync(BuildCollectionUrl(endpoint)));
     }
 
-    private string NormalizeEndpoint(string endpoint)
+    public async Task<List<T>> GetAllAsync<T>(string endpoint)
+    {
+        return await GetAsync<List<T>>(endpoint) ?? [];
+    }
+
+    public async Task<T?> GetByIdAsync<T>(string endpoint, int id)
+    {
+        return await SendAsync<T>(() => _http.GetAsync(BuildByIdUrl(endpoint, id)));
+    }
+
+    public async Task<bool> PostAsync<T>(string endpoint, T data)
+    {
+        return await SendAsync(() => _http.PostAsJsonAsync(BuildCollectionUrl(endpoint), data, JsonOptions));
+    }
+
+    public async Task<bool> PutAsync<T>(string endpoint, int id, T data)
+    {
+        return await SendAsync(() => _http.PutAsJsonAsync(BuildByIdUrl(endpoint, id), data, JsonOptions));
+    }
+
+    public async Task<bool> DeleteAsync(string endpoint, int id)
+    {
+        return await SendAsync(() => _http.DeleteAsync(BuildByIdUrl(endpoint, id)));
+    }
+
+    private static async Task<bool> SendAsync(Func<Task<HttpResponseMessage>> sendRequest)
+    {
+        using var response = await sendRequest();
+        await EnsureSuccessAsync(response);
+        return true;
+    }
+
+    private static async Task<T?> SendAsync<T>(Func<Task<HttpResponseMessage>> sendRequest)
+    {
+        using var response = await sendRequest();
+        return await ReadResponseAsync<T>(response);
+    }
+
+    private static string NormalizeEndpoint(string endpoint)
     {
         var normalized = endpoint.Trim().TrimStart('/');
 
@@ -27,65 +70,59 @@ public class ApiService : IApiService
             : $"api/{normalized}";
     }
 
-    private string BuildCollectionUrl(string endpoint)
-        => $"{NormalizeEndpoint(endpoint)}?database={_database}";
+    private static string BuildCollectionUrl(string endpoint) => NormalizeEndpoint(endpoint);
 
-    private string BuildByIdUrl(string endpoint, int id)
-        => $"{NormalizeEndpoint(endpoint)}/{id}?database={_database}";
+    private static string BuildByIdUrl(string endpoint, int id) => $"{NormalizeEndpoint(endpoint)}/{id}";
 
-    public async Task<List<T>> GetAllAsync<T>(string endpoint)
+    private static async Task<T?> ReadResponseAsync<T>(HttpResponseMessage response)
     {
-        var response = await _http.GetAsync(BuildCollectionUrl(endpoint));
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response);
 
-        var json = await response.Content.ReadAsStringAsync();
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent || response.Content == null)
+            return default;
 
-        return JsonSerializer.Deserialize<List<T>>(json, new JsonSerializerOptions
+        var content = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(content))
+            return default;
+
+        return JsonSerializer.Deserialize<T>(content, JsonOptions);
+    }
+
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response)
+    {
+        if (response.IsSuccessStatusCode)
+            return;
+
+        var payload = await response.Content.ReadAsStringAsync();
+        var message = ExtractErrorMessage(payload);
+
+        throw new InvalidOperationException(message ?? $"Falha na requisição HTTP: {(int)response.StatusCode} {response.ReasonPhrase}");
+    }
+
+    private static string? ExtractErrorMessage(string? payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload))
+            return null;
+
+        try
         {
-            PropertyNameCaseInsensitive = true
-        }) ?? new List<T>();
-    }
+            using var document = JsonDocument.Parse(payload);
+            var root = document.RootElement;
 
-    public async Task<T?> GetByIdAsync<T>(string endpoint, int id)
-    {
-        var response = await _http.GetAsync(BuildByIdUrl(endpoint, id));
-        response.EnsureSuccessStatusCode();
-
-        var json = await response.Content.ReadAsStringAsync();
-
-        return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
+            foreach (var propertyName in new[] { "message", "Mensagem", "error", "detail" })
+            {
+                if (root.TryGetProperty(propertyName, out var property) &&
+                    property.ValueKind == JsonValueKind.String)
+                {
+                    return property.GetString();
+                }
+            }
+        }
+        catch (JsonException)
         {
-            PropertyNameCaseInsensitive = true
-        });
-    }
+            return payload;
+        }
 
-    public async Task<bool> PostAsync<T>(string endpoint, T data)
-    {
-        var content = new StringContent(
-            JsonSerializer.Serialize(data),
-            Encoding.UTF8,
-            "application/json"
-        );
-
-        var response = await _http.PostAsync(BuildCollectionUrl(endpoint), content);
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<bool> PutAsync<T>(string endpoint, int id, T data)
-    {
-        var content = new StringContent(
-            JsonSerializer.Serialize(data),
-            Encoding.UTF8,
-            "application/json"
-        );
-
-        var response = await _http.PutAsync(BuildByIdUrl(endpoint, id), content);
-        return response.IsSuccessStatusCode;
-    }
-
-    public async Task<bool> DeleteAsync(string endpoint, int id)
-    {
-        var response = await _http.DeleteAsync(BuildByIdUrl(endpoint, id));
-        return response.IsSuccessStatusCode;
+        return payload;
     }
 }

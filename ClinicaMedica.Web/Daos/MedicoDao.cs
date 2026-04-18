@@ -3,11 +3,24 @@ using ClinicaMedica.Web.Data;
 using ClinicaMedica.Web.Data.Dialects;
 using ClinicaMedica.Web.Models;
 using Dapper;
+using System.Data;
 
 namespace ClinicaMedica.Web.Daos;
 
 public class MedicoDao : IMedicoDao
 {
+    private const string SelectColumns = @"
+            SELECT 
+                ID AS Id,
+                NOME AS Nome,
+                CRM AS Crm,
+                ESPECIALIDADE AS Especialidade,
+                TELEFONE AS Telefone,
+                EMAIL AS Email,
+                ATIVO AS Ativo,
+                DATACADASTRO AS DataCadastro
+            FROM MEDICOS";
+
     private readonly DbConnectionFactory _dbFactory;
     private readonly ISqlDialect _dialect;
 
@@ -17,31 +30,36 @@ public class MedicoDao : IMedicoDao
         _dialect = dialectFactory.Criar();
     }
 
+    private string P(string name) => _dialect.PrefixoParametro + name;
+
     public async Task<IEnumerable<Medico>> ObterTodos()
     {
         using var conn = _dbFactory.CreateOpenConnection();
+        var sql = $"{SelectColumns}\n            ORDER BY ID";
 
-        return await conn.QueryAsync<Medico>(
-            "SELECT * FROM medicos ORDER BY Id"
-        );
+        return await conn.QueryAsync<Medico>(sql);
     }
 
     public async Task<Medico?> ObterPorId(int id)
     {
         using var conn = _dbFactory.CreateOpenConnection();
+        var sql = $"{SelectColumns}\n            WHERE ID = {P("Id")}";
 
-        var sql = $"SELECT * FROM medicos WHERE Id = {_dialect.PrefixoParametro}Id";
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", id, DbType.Int32);
 
-        return await conn.QueryFirstOrDefaultAsync<Medico>(sql, new { Id = id });
+        return await conn.QueryFirstOrDefaultAsync<Medico>(sql, parameters);
     }
 
     public async Task<Medico?> ObterPorCrmAsync(string crm)
     {
         using var conn = _dbFactory.CreateOpenConnection();
+        var sql = $"{SelectColumns}\n            WHERE CRM = {P("Crm")}";
 
-        var sql = $"SELECT * FROM medicos WHERE CRM = {_dialect.PrefixoParametro}Crm";
+        var parameters = new DynamicParameters();
+        parameters.Add("Crm", crm, DbType.String);
 
-        return await conn.QueryFirstOrDefaultAsync<Medico>(sql, new { Crm = crm });
+        return await conn.QueryFirstOrDefaultAsync<Medico>(sql, parameters);
     }
 
     public async Task<bool> AdicionarAsync(Medico medico)
@@ -49,43 +67,65 @@ public class MedicoDao : IMedicoDao
         using var conn = _dbFactory.CreateOpenConnection();
 
         var sql = $@"
-            INSERT INTO medicos
-            (Nome, CRM, Especialidade, Telefone, Email, Ativo, DataCadastro)
+            INSERT INTO MEDICOS
+            (NOME, CRM, ESPECIALIDADE, TELEFONE, EMAIL, ATIVO, DATACADASTRO)
             VALUES
-            ({_dialect.PrefixoParametro}Nome,
-             {_dialect.PrefixoParametro}Crm,
-             {_dialect.PrefixoParametro}Especialidade,
-             {_dialect.PrefixoParametro}Telefone,
-             {_dialect.PrefixoParametro}Email,
-             {_dialect.PrefixoParametro}Ativo,
-             {_dialect.PrefixoParametro}DataCadastro)";
+            ({P("Nome")},
+             {P("Crm")},
+             {P("Especialidade")},
+             {P("Telefone")},
+             {P("Email")},
+             {P("Ativo")},
+             {P("DataCadastro")})";
 
-        return await conn.ExecuteAsync(sql, medico) > 0;
+        return await conn.ExecuteAsync(sql, CreateMedicoParameters(medico)) > 0;
     }
 
     public async Task<bool> AtualizarAsync(Medico medico)
     {
         using var conn = _dbFactory.CreateOpenConnection();
 
-        var sql = $@"
-            UPDATE medicos SET
-                Nome = {_dialect.PrefixoParametro}Nome,
-                CRM = {_dialect.PrefixoParametro}Crm,
-                Especialidade = {_dialect.PrefixoParametro}Especialidade,
-                Telefone = {_dialect.PrefixoParametro}Telefone,
-                Email = {_dialect.PrefixoParametro}Email,
-                Ativo = {_dialect.PrefixoParametro}Ativo
-            WHERE Id = {_dialect.PrefixoParametro}Id";
+        var sql = @"
+            UPDATE MEDICOS SET
+                NOME = " + P("Nome") + @",
+                CRM = " + P("Crm") + @",
+                ESPECIALIDADE = " + P("Especialidade") + @",
+                TELEFONE = " + P("Telefone") + @",
+                EMAIL = " + P("Email") + @",
+                ATIVO = " + P("Ativo") + @"
+            WHERE ID = " + P("Id");
 
-        return await conn.ExecuteAsync(sql, medico) > 0;
+        return await conn.ExecuteAsync(sql, CreateMedicoParameters(medico)) > 0;
     }
 
     public async Task<bool> ExcluirAsync(int id)
     {
         using var conn = _dbFactory.CreateOpenConnection();
 
-        var sql = $"DELETE FROM medicos WHERE Id = {_dialect.PrefixoParametro}Id";
+        var sql = "DELETE FROM MEDICOS WHERE ID = " + P("Id");
 
-        return await conn.ExecuteAsync(sql, new { Id = id }) > 0;
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", id, DbType.Int32);
+
+        return await conn.ExecuteAsync(sql, parameters) > 0;
+    }
+
+    private DynamicParameters CreateMedicoParameters(Medico medico)
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("Id", medico.Id, DbType.Int32);
+        parameters.Add("Nome", medico.Nome, DbType.String);
+        parameters.Add("Crm", medico.Crm, DbType.String);
+        parameters.Add("Especialidade", medico.Especialidade, DbType.String);
+        parameters.Add("Telefone", medico.Telefone, DbType.String);
+        parameters.Add("Email", medico.Email, DbType.String);
+        parameters.Add("Ativo", NormalizeBoolean(medico.Ativo), DbType.Int32);
+        parameters.Add("DataCadastro", medico.DataCadastro, DbType.DateTime);
+        return parameters;
+    }
+
+    private int NormalizeBoolean(bool value)
+    {
+        return value ? 1 : 0;
     }
 }

@@ -1,26 +1,26 @@
 using ClinicaMedica.Consumidor.Helpers;
+using ClinicaMedica.Consumidor.Services.Interfaces;
 using ClinicaMedica.Consumidor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicaMedica.Consumidor.Controllers;
 
-public class PacientesController : Controller
+public class PacientesController : ConsumerControllerBase
 {
     private const int PageSize = 10;
-    private const string Endpoint = "pacientes";
-    private readonly IApiService _api;
+    private readonly IPacienteService _service;
 
-    public PacientesController(IApiService api)
+    public PacientesController(IPacienteService service)
     {
-        _api = api;
+        _service = service;
     }
 
     public async Task<IActionResult> Index(int page = 1)
     {
         try
         {
-            var pacientes = await _api.GetAllAsync<PacienteViewModel>(Endpoint);
-            var pagination = PaginationHelper.Create(page, pacientes.Count, PageSize, HttpContext.Session.GetString("database"));
+            var pacientes = await _service.ObterTodosAsync();
+            var pagination = CreatePagination(page, pacientes.Count, PageSize);
 
             var model = new PacienteIndexViewModel
             {
@@ -35,7 +35,7 @@ public class PacientesController : Controller
             ViewData["ErroApi"] = $"Erro ao carregar pacientes: {ex.Message}";
             return View(new PacienteIndexViewModel
             {
-                Pagination = PaginationHelper.Create(1, 0, PageSize, HttpContext.Session.GetString("database"))
+                Pagination = CreatePagination(1, 0, PageSize)
             });
         }
     }
@@ -44,20 +44,16 @@ public class PacientesController : Controller
     {
         try
         {
-            var paciente = await _api.GetByIdAsync<PacienteViewModel>(Endpoint, id);
+            var paciente = await _service.ObterPorIdAsync(id);
 
             if (paciente == null)
-            {
-                TempData["Erro"] = "Paciente não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Paciente não encontrado.");
 
             return View(paciente);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao buscar paciente: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao buscar paciente: {ex.Message}");
         }
     }
 
@@ -71,13 +67,11 @@ public class PacientesController : Controller
     public async Task<IActionResult> Create(PacienteViewModel model)
     {
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
-            var sucesso = await _api.PostAsync(Endpoint, model);
+            var sucesso = await _service.CriarAsync(model);
 
             if (sucesso)
             {
@@ -86,33 +80,29 @@ public class PacientesController : Controller
             }
 
             ModelState.AddModelError(string.Empty, "Erro ao cadastrar paciente.");
-            return View(model);
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, $"Erro inesperado: {ex.Message}");
-            return View(model);
+            AddUnexpectedModelError("Erro ao cadastrar paciente", ex);
         }
+
+        return View(model);
     }
 
     public async Task<IActionResult> Edit(int id)
     {
         try
         {
-            var paciente = await _api.GetByIdAsync<PacienteViewModel>(Endpoint, id);
+            var paciente = await _service.ObterPorIdAsync(id);
 
             if (paciente == null)
-            {
-                TempData["Erro"] = "Paciente não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Paciente não encontrado.");
 
             return View(paciente);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar paciente: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar paciente: {ex.Message}");
         }
     }
 
@@ -121,19 +111,14 @@ public class PacientesController : Controller
     public async Task<IActionResult> Edit(int id, PacienteViewModel model)
     {
         if (id != model.Id)
-        {
-            TempData["Erro"] = "ID inválido.";
-            return RedirectToAction(nameof(Index));
-        }
+            return RedirectToIndexWithError("ID inválido.");
 
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
-            var sucesso = await _api.PutAsync(Endpoint, id, model);
+            var sucesso = await _service.AtualizarAsync(id, model);
 
             if (sucesso)
             {
@@ -142,33 +127,29 @@ public class PacientesController : Controller
             }
 
             ModelState.AddModelError(string.Empty, "Erro ao atualizar paciente.");
-            return View(model);
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, $"Erro inesperado: {ex.Message}");
-            return View(model);
+            AddUnexpectedModelError("Erro ao atualizar paciente", ex);
         }
+
+        return View(model);
     }
 
     public async Task<IActionResult> Delete(int id)
     {
         try
         {
-            var paciente = await _api.GetByIdAsync<PacienteViewModel>(Endpoint, id);
+            var paciente = await _service.ObterPorIdAsync(id);
 
             if (paciente == null)
-            {
-                TempData["Erro"] = "Paciente não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Paciente não encontrado.");
 
             return View(paciente);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar paciente: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar paciente: {ex.Message}");
         }
     }
 
@@ -178,20 +159,15 @@ public class PacientesController : Controller
     {
         try
         {
-            var sucesso = await _api.DeleteAsync(Endpoint, id);
+            var sucesso = await _service.ExcluirAsync(id);
 
-            if (sucesso)
-            {
-                TempData["Sucesso"] = "Paciente excluído com sucesso.";
-            }
-            else
-            {
-                TempData["Erro"] = "Erro ao excluir paciente.";
-            }
+            TempData[sucesso ? "Sucesso" : "Erro"] = sucesso
+                ? "Paciente excluído com sucesso."
+                : "Erro ao excluir paciente.";
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro inesperado: {ex.Message}";
+            TempData["Erro"] = $"Erro ao excluir paciente: {ex.Message}";
         }
 
         return RedirectToAction(nameof(Index));

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace ClinicaMedica.Consumidor.ViewModels
@@ -36,10 +36,10 @@ namespace ClinicaMedica.Consumidor.ViewModels
         [Display(Name = "Data de Cadastro")]
         public DateTime DataCadastro { get; set; }
 
-        [JsonIgnore]
+        [JsonPropertyName("MedicoNome")]
         public string? NomeMedico { get; set; }
 
-        [JsonIgnore]
+        [JsonPropertyName("PacienteNome")]
         public string? NomePaciente { get; set; }
 
         [JsonIgnore]

@@ -1,23 +1,20 @@
-﻿namespace ClinicaMedica.Consumidor.Infrastructure.Http
+using ClinicaMedica.Consumidor.Infrastructure.Database;
+using Microsoft.AspNetCore.Http;
+
+namespace ClinicaMedica.Consumidor.Infrastructure.Http;
+
+public class UserContext : IUserContext
 {
-    using Microsoft.AspNetCore.Http;
+    private readonly IHttpContextAccessor _http;
 
-    public class UserContext : IUserContext
+    public UserContext(IHttpContextAccessor http)
     {
-        private readonly IHttpContextAccessor _http;
+        _http = http;
+    }
 
-        public UserContext(IHttpContextAccessor http)
-        {
-            _http = http;
-        }
-
-        public string GetDatabase()
-        {
-            var db = _http.HttpContext?.Session?.GetString("database");
-
-            return string.IsNullOrEmpty(db)
-                ? "mysql"
-                : db;
-        }
+    public string GetDatabase()
+    {
+        var database = _http.HttpContext?.Session?.GetString(DatabaseSession.SessionKey);
+        return DatabaseSession.Normalize(database);
     }
 }

@@ -47,8 +47,7 @@ public class PacientesController : Controller
         {
             ModelState.AddModelError("Cpf", "O CPF é obrigatório.");
         }
-
-        if (await _pacienteService.ExisteCpfAsync(vm.Cpf))
+        else if (await _pacienteService.ExisteCpfAsync(vm.Cpf))
         {
             ModelState.AddModelError("Cpf", "Este CPF já está cadastrado.");
         }
@@ -67,7 +66,16 @@ public class PacientesController : Controller
             DataCadastro = DateTime.Now
         };
 
-        await _pacienteService.AdicionarAsync(paciente);
+        try
+        {
+            await _pacienteService.AdicionarAsync(paciente);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("Cpf", ex.Message);
+            return View(vm);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -107,7 +115,16 @@ public class PacientesController : Controller
         paciente.DataNascimento = vm.DataNascimento;
         paciente.Ativo = vm.Ativo;
 
-        await _pacienteService.AtualizarAsync(paciente);
+        try
+        {
+            await _pacienteService.AtualizarAsync(paciente);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError("Cpf", ex.Message);
+            return View(vm);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -131,7 +148,15 @@ public class PacientesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        await _pacienteService.ExcluirAsync(id);
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            await _pacienteService.ExcluirAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Erro"] = ex.Message;
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

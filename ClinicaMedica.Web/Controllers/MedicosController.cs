@@ -133,8 +133,16 @@ public class MedicosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        bool sucesso = await _medicoService.ExcluirAsync(id);
-        if (!sucesso) return NotFound();
-        return RedirectToAction(nameof(Index));
+        try
+        {
+            bool sucesso = await _medicoService.ExcluirAsync(id);
+            if (!sucesso) return NotFound();
+            return RedirectToAction(nameof(Index));
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Erro"] = ex.Message;
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

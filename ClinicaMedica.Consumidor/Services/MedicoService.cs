@@ -1,27 +1,28 @@
+using ClinicaMedica.Consumidor.Services.Interfaces;
 using ClinicaMedica.Consumidor.ViewModels;
+using ClinicaMedica.Consumidor.Services.Implementations;
 
-public class MedicoService : IMedicoService
+namespace ClinicaMedica.Consumidor.Services;
+
+public class MedicoService : CrudApiServiceBase<MedicoViewModel>, IMedicoService
 {
-    private readonly IApiService _api;
-    private const string Endpoint = "medicosApi";
-
     public MedicoService(IApiService api)
+        : base(api, ApiEndpoints.Medicos)
     {
-        _api = api;
     }
 
-    public async Task<List<MedicoViewModel>> ObterTodosAsync()
-        => await _api.GetAllAsync<MedicoViewModel>(Endpoint);
+    public Task<List<MedicoViewModel>> ObterTodosAsync()
+        => GetAllAsync();
 
-    public async Task<MedicoViewModel?> ObterPorIdAsync(int id)
-        => await _api.GetByIdAsync<MedicoViewModel>(Endpoint, id);
+    public Task<MedicoViewModel?> ObterPorIdAsync(int id)
+        => GetByIdAsync(id);
 
-    public async Task<bool> CriarAsync(MedicoViewModel model)
-        => await _api.PostAsync(Endpoint, model);
+    public Task<bool> CriarAsync(MedicoViewModel model)
+        => CreateAsync(model);
 
-    public async Task<bool> AtualizarAsync(int id, MedicoViewModel model)
-        => await _api.PutAsync(Endpoint, id, model);
+    public Task<bool> AtualizarAsync(int id, MedicoViewModel model)
+        => UpdateAsync(id, model);
 
-    public async Task<bool> ExcluirAsync(int id)
-        => await _api.DeleteAsync(Endpoint, id);
+    public Task<bool> ExcluirAsync(int id)
+        => DeleteAsync(id);
 }

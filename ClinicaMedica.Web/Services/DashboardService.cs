@@ -1,10 +1,10 @@
-﻿using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.Daos.Interfaces;
+using ClinicaMedica.Web.Services.Interfaces;
 using ClinicaMedica.Web.ViewModels.Dashboard;
-using System.Threading.Tasks;
 
 namespace ClinicaMedica.Web.Services
 {
-    public class DashboardService
+    public class DashboardService : IDashboardService
     {
         private readonly IDashboardDao _dashboardDao;
 
@@ -13,7 +13,7 @@ namespace ClinicaMedica.Web.Services
             _dashboardDao = dashboardDao;
         }
 
-        public async Task<DashboardViewModel> ObterDadosResumoAsync()
+        public async Task<DashboardViewModel> ObterResumoAsync()
         {
             return new DashboardViewModel
             {

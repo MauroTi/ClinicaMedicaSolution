@@ -13,6 +13,12 @@
 <body>
     @{
         var db = Context.Session.GetString("database") ?? "mysql";
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+        var targetAction = currentAction is "Index" or "GraficoStatus"
+            ? currentAction
+            : "Index";
+        var databaseSwitchUrl = Url.Action(targetAction, currentController) ?? "/";
     }
 
     <header>
@@ -61,7 +67,7 @@
 
                         <!-- 🔥 DROPDOWN BANCO -->
                         <li class="nav-item ms-3">
-                            <form method="get" action="@Context.Request.Path">
+                            <form method="get" action="@databaseSwitchUrl">
                                 <select name="database"
                                         class="form-select form-select-sm"
                                         onchange="this.form.submit()">

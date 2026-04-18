@@ -1,4 +1,4 @@
-﻿using ClinicaMedica.Consumidor.Services.Interfaces;
+using ClinicaMedica.Consumidor.Services.Interfaces;
 using ClinicaMedica.Consumidor.ViewModels;
 
 namespace ClinicaMedica.Consumidor.Services.Implementations;
@@ -6,74 +6,91 @@ namespace ClinicaMedica.Consumidor.Services.Implementations;
 public class ConsultaService : IConsultaService
 {
     private readonly IApiService _api;
-    private readonly string _endpoint = "consultas";
+    private readonly IMedicoService _medicoService;
+    private readonly IPacienteService _pacienteService;
 
-    public ConsultaService(IApiService api)
+    public ConsultaService(
+        IApiService api,
+        IMedicoService medicoService,
+        IPacienteService pacienteService)
     {
         _api = api;
+        _medicoService = medicoService;
+        _pacienteService = pacienteService;
     }
 
-    public async Task<List<ConsultaViewModel>> ObterTodosAsync()
+    public Task<List<ConsultaViewModel>> ObterTodosAsync()
     {
-        return await _api.GetAllAsync<ConsultaViewModel>(_endpoint);
+        return _api.GetAllAsync<ConsultaViewModel>(ApiEndpoints.Consultas);
     }
 
     public async Task<ConsultaViewModel?> ObterPorIdAsync(int id)
     {
-        var consulta = await _api.GetByIdAsync<ConsultaViewModel>(_endpoint, id);
+        var consulta = await _api.GetByIdAsync<ConsultaViewModel>(ApiEndpoints.Consultas, id);
 
         if (consulta == null)
-        {
             return null;
-        }
 
-        if (consulta.MedicoId > 0)
-        {
-            var medico = await _api.GetByIdAsync<MedicoViewModel>("medicosApi", consulta.MedicoId);
-            consulta.NomeMedico = medico?.Nome;
-        }
-
-        if (consulta.PacienteId > 0)
-        {
-            var paciente = await _api.GetByIdAsync<PacienteViewModel>("pacientes", consulta.PacienteId);
-            consulta.NomePaciente = paciente?.Nome;
-        }
-
+        await EnrichRelatedNamesAsync(consulta);
         return consulta;
     }
 
-    public async Task<bool> CriarAsync(ConsultaViewModel model)
+    public Task<bool> CriarAsync(ConsultaViewModel model)
     {
-        return await _api.PostAsync(_endpoint, model);
+        return _api.PostAsync(ApiEndpoints.Consultas, model);
     }
 
-    public async Task<bool> AtualizarAsync(int id, ConsultaViewModel model)
+    public Task<bool> AtualizarAsync(int id, ConsultaViewModel model)
     {
-        return await _api.PutAsync(_endpoint, id, model);
+        return _api.PutAsync(ApiEndpoints.Consultas, id, model);
     }
 
-    public async Task<bool> ExcluirAsync(int id)
+    public Task<bool> ExcluirAsync(int id)
     {
-        return await _api.DeleteAsync(_endpoint, id);
+        return _api.DeleteAsync(ApiEndpoints.Consultas, id);
     }
 
     public async Task PreencherListasAsync(ConsultaViewModel model)
     {
-        model.Medicos = (await _api.GetAllAsync<MedicoViewModel>("medicosApi"))
+        var medicosTask = _medicoService.ObterTodosAsync();
+        var pacientesTask = _pacienteService.ObterTodosAsync();
+
+        await Task.WhenAll(medicosTask, pacientesTask);
+
+        model.Medicos = medicosTask.Result
             .OrderBy(m => m.Nome)
             .ToList();
 
-        model.Pacientes = (await _api.GetAllAsync<PacienteViewModel>("pacientes"))
+        model.Pacientes = pacientesTask.Result
             .OrderBy(p => p.Nome)
             .ToList();
     }
 
     public async Task<Dictionary<string, int>> ObterGraficoStatusAsync()
     {
-        var dados = await _api.GetAllAsync<ConsultaViewModel>(_endpoint);
-
-        return dados
-            .GroupBy(c => string.IsNullOrWhiteSpace(c.Status) ? "Sem status" : c.Status.Trim())
-            .ToDictionary(g => g.Key, g => g.Count());
+        return await _api.GetAsync<Dictionary<string, int>>(ApiEndpoints.ConsultasGraficoStatus)
+            ?? [];
     }
+
+    private async Task EnrichRelatedNamesAsync(ConsultaViewModel consulta)
+    {
+        var medicoTask = NeedsDoctorLookup(consulta)
+            ? _medicoService.ObterPorIdAsync(consulta.MedicoId)
+            : Task.FromResult<MedicoViewModel?>(null);
+
+        var pacienteTask = NeedsPatientLookup(consulta)
+            ? _pacienteService.ObterPorIdAsync(consulta.PacienteId)
+            : Task.FromResult<PacienteViewModel?>(null);
+
+        await Task.WhenAll(medicoTask, pacienteTask);
+
+        consulta.NomeMedico ??= medicoTask.Result?.Nome;
+        consulta.NomePaciente ??= pacienteTask.Result?.Nome;
+    }
+
+    private static bool NeedsDoctorLookup(ConsultaViewModel consulta)
+        => string.IsNullOrWhiteSpace(consulta.NomeMedico) && consulta.MedicoId > 0;
+
+    private static bool NeedsPatientLookup(ConsultaViewModel consulta)
+        => string.IsNullOrWhiteSpace(consulta.NomePaciente) && consulta.PacienteId > 0;
 }

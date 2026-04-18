@@ -68,9 +68,16 @@ namespace ClinicaMedica.Web.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            bool sucesso = await _medicoService.ExcluirAsync(id);
-            if (!sucesso) return NotFound();
-            return NoContent();
+            try
+            {
+                bool sucesso = await _medicoService.ExcluirAsync(id);
+                if (!sucesso) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

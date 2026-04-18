@@ -1,72 +1,70 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using System;
+using Microsoft.Extensions.Logging;
 
 namespace ClinicaMedica.Web.Infrastructure.Database.Providers
 {
     public class DatabaseProviderResolver : IDatabaseProviderResolver
     {
+        private const string CookieName = "SelectedDatabaseProvider";
+
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
-        private const string CookieName = "SelectedDatabaseProvider";
+        private readonly ILogger<DatabaseProviderResolver> _logger;
 
         public DatabaseProviderResolver(
             IConfiguration configuration,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<DatabaseProviderResolver> logger)
         {
             _configuration = configuration;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public DatabaseProvider GetProvider()
         {
             var ctx = _httpContextAccessor.HttpContext;
 
-            var query = ctx.Request.Query["database"].ToString();
-
-            if (!string.IsNullOrWhiteSpace(query) &&
-                Enum.TryParse(query, true, out DatabaseProvider qp))
+            if (ctx is not null &&
+                TryParseProvider(ctx.Request.Query["database"].ToString(), out var queryProvider))
             {
-                return qp;
+                _logger.LogInformation("Provider resolvido via query string: {Provider}", queryProvider);
+                return queryProvider;
             }
 
-            // 🔥 1. HEADER (PRIORIDADE REAL DO CONSUMER)
-            if (ctx.Request.Headers.TryGetValue("X-Database", out var headerValue))
+            if (ctx?.Request.Headers.TryGetValue("X-Database", out var headerValue) == true &&
+                TryParseProvider(headerValue.ToString(), out var headerProvider))
             {
-                var header = headerValue.ToString();
-
-                if (!string.IsNullOrWhiteSpace(header) &&
-                    Enum.TryParse(header, true, out DatabaseProvider headerProvider))
-                {
-                    Console.WriteLine($"🔥 DB via HEADER: {headerProvider}");
-                    return headerProvider;
-                }
+                _logger.LogInformation("Provider resolvido via header: {Provider}", headerProvider);
+                return headerProvider;
             }
 
-            // 🔥 2. COOKIE (fallback UI)
-            if (ctx.Request.Cookies.TryGetValue(CookieName, out var cookieValue))
+            if (ctx?.Request.Cookies.TryGetValue(CookieName, out var cookieValue) == true &&
+                TryParseProvider(cookieValue, out var cookieProvider))
             {
-                if (!string.IsNullOrWhiteSpace(cookieValue) &&
-                    Enum.TryParse(cookieValue, true, out DatabaseProvider cookieProvider))
-                {
-                    Console.WriteLine($"🍪 DB via COOKIE: {cookieProvider}");
-                    return cookieProvider;
-                }
+                _logger.LogInformation("Provider resolvido via cookie: {Provider}", cookieProvider);
+                return cookieProvider;
             }
 
-            // 🔥 3. CONFIG (fallback final)
-            var configValue = _configuration["DatabaseSettings:DefaultProvider"];
+            var configValue = _configuration["DatabaseSettings:Provider"]
+                ?? _configuration["DatabaseSettings:DefaultProvider"];
 
-            if (!string.IsNullOrWhiteSpace(configValue) &&
-                Enum.TryParse(configValue, true, out DatabaseProvider configProvider))
+            if (TryParseProvider(configValue, out var configProvider))
             {
-                Console.WriteLine($"⚙️ DB via CONFIG: {configProvider}");
+                _logger.LogInformation("Provider resolvido via configuração: {Provider}", configProvider);
                 return configProvider;
             }
 
-            Console.WriteLine("⚠️ DB fallback: MySql");
+            _logger.LogWarning("Provider não informado. Aplicando fallback para MySql.");
             return DatabaseProvider.MySql;
+        }
+
+        private static bool TryParseProvider(string? value, out DatabaseProvider provider)
+        {
+            provider = default;
+            return !string.IsNullOrWhiteSpace(value)
+                && Enum.TryParse(value, true, out provider);
         }
     }
 }

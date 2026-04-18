@@ -1,10 +1,11 @@
 using ClinicaMedica.Consumidor.Helpers;
+using ClinicaMedica.Consumidor.Services.Interfaces;
 using ClinicaMedica.Consumidor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicaMedica.Consumidor.Controllers;
 
-public class MedicosController : Controller
+public class MedicosController : ConsumerControllerBase
 {
     private const int PageSize = 10;
     private readonly IMedicoService _service;
@@ -19,7 +20,7 @@ public class MedicosController : Controller
         try
         {
             var medicos = await _service.ObterTodosAsync();
-            var pagination = PaginationHelper.Create(page, medicos.Count, PageSize, HttpContext.Session.GetString("database"));
+            var pagination = CreatePagination(page, medicos.Count, PageSize);
 
             var model = new MedicoIndexViewModel
             {
@@ -34,7 +35,7 @@ public class MedicosController : Controller
             ViewData["ErroApi"] = $"Erro ao carregar médicos: {ex.Message}";
             return View(new MedicoIndexViewModel
             {
-                Pagination = PaginationHelper.Create(1, 0, PageSize, HttpContext.Session.GetString("database"))
+                Pagination = CreatePagination(1, 0, PageSize)
             });
         }
     }
@@ -53,9 +54,7 @@ public class MedicosController : Controller
     public async Task<IActionResult> Create(MedicoViewModel model)
     {
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
@@ -73,7 +72,7 @@ public class MedicosController : Controller
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, $"Erro ao cadastrar médico: {ex.Message}");
+            AddUnexpectedModelError("Erro ao cadastrar médico", ex);
         }
 
         return View(model);
@@ -86,17 +85,13 @@ public class MedicosController : Controller
             var medico = await _service.ObterPorIdAsync(id);
 
             if (medico == null)
-            {
-                TempData["Erro"] = "Médico não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Médico não encontrado.");
 
             return View(medico);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar médico: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar médico: {ex.Message}");
         }
     }
 
@@ -107,17 +102,13 @@ public class MedicosController : Controller
             var medico = await _service.ObterPorIdAsync(id);
 
             if (medico == null)
-            {
-                TempData["Erro"] = "Médico não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Médico não encontrado.");
 
             return View(medico);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar médico para edição: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar médico para edição: {ex.Message}");
         }
     }
 
@@ -126,25 +117,17 @@ public class MedicosController : Controller
     public async Task<IActionResult> Edit(int id, MedicoViewModel model)
     {
         if (id != model.Id)
-        {
-            TempData["Erro"] = "ID inválido.";
-            return RedirectToAction(nameof(Index));
-        }
+            return RedirectToIndexWithError("ID inválido.");
 
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         try
         {
             var existente = await _service.ObterPorIdAsync(id);
 
             if (existente == null)
-            {
-                TempData["Erro"] = "Médico não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Médico não encontrado.");
 
             model.DataCadastro = existente.DataCadastro;
 
@@ -160,7 +143,7 @@ public class MedicosController : Controller
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, $"Erro ao atualizar médico: {ex.Message}");
+            AddUnexpectedModelError("Erro ao atualizar médico", ex);
         }
 
         return View(model);
@@ -173,17 +156,13 @@ public class MedicosController : Controller
             var medico = await _service.ObterPorIdAsync(id);
 
             if (medico == null)
-            {
-                TempData["Erro"] = "Médico não encontrado.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Médico não encontrado.");
 
             return View(medico);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar médico para exclusão: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar médico para exclusão: {ex.Message}");
         }
     }
 
@@ -195,14 +174,9 @@ public class MedicosController : Controller
         {
             var sucesso = await _service.ExcluirAsync(id);
 
-            if (sucesso)
-            {
-                TempData["Sucesso"] = "Médico excluído com sucesso.";
-            }
-            else
-            {
-                TempData["Erro"] = "Não foi possível excluir o médico.";
-            }
+            TempData[sucesso ? "Sucesso" : "Erro"] = sucesso
+                ? "Médico excluído com sucesso."
+                : "Não foi possível excluir o médico.";
         }
         catch (Exception ex)
         {

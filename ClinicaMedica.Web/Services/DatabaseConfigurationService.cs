@@ -1,4 +1,4 @@
-﻿using ClinicaMedica.Web.Infrastructure.Database.Providers;
+using ClinicaMedica.Web.Infrastructure.Database.Providers;
 using ClinicaMedica.Web.Models;
 using System.Text.Json;
 
@@ -34,14 +34,14 @@ namespace ClinicaMedica.Web.Services
         {
             try
             {
-                var provider = _configuration["DatabaseSettings:Provider"] ?? "MySql";
-                _logger.LogInformation($"Provider atual: {provider}");
+                var provider = NormalizeProvider(_configuration["DatabaseSettings:Provider"]);
+                _logger.LogInformation("Provider atual: {Provider}", provider);
                 return Task.FromResult(provider);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao obter provider: {ex.Message}");
-                return Task.FromResult("MySql");
+                _logger.LogError(ex, "Erro ao obter provider.");
+                return Task.FromResult(DatabaseProvider.MySql.ToString());
             }
         }
 
@@ -55,42 +55,40 @@ namespace ClinicaMedica.Web.Services
                 if (!File.Exists(_configPath))
                     throw new FileNotFoundException($"Arquivo de configuração não encontrado: {_configPath}");
 
+                var normalizedProvider = NormalizeProvider(provider);
                 var json = await File.ReadAllTextAsync(_configPath);
                 using var document = JsonDocument.Parse(json);
                 var root = document.RootElement;
 
-                // Criar novo objeto de configuração
                 var newConfig = new Dictionary<string, object?>
                 {
                     { "ConnectionStrings", root.GetProperty("ConnectionStrings").Deserialize<Dictionary<string, string>>() },
                     { "Logging", root.GetProperty("Logging").Deserialize<object>() },
                     { "DatabaseSettings", new Dictionary<string, string>
                         {
-                            { "Provider", provider },
-                            { "ConnectionStringName", provider == "Oracle" ? "OracleConnection" : "DefaultConnection" }
+                            { "Provider", normalizedProvider },
+                            { "ConnectionStringName", GetConnectionStringName(normalizedProvider) }
                         }
                     },
                     { "AllowedHosts", root.GetProperty("AllowedHosts").GetString() }
                 };
 
-                var options = new JsonSerializerOptions 
-                { 
+                var options = new JsonSerializerOptions
+                {
                     WriteIndented = true,
                     PropertyNamingPolicy = null
                 };
 
                 var updatedJson = JsonSerializer.Serialize(newConfig, options);
                 await File.WriteAllTextAsync(_configPath, updatedJson);
-
-                // ✅ CRUCIAL: Recarregar a configuração
                 _configRoot.Reload();
 
-                _logger.LogInformation($"✅ Provider alterado para: {provider}");
+                _logger.LogInformation("Provider alterado para: {Provider}", normalizedProvider);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Erro ao alternar provider: {ex.Message}");
+                _logger.LogError(ex, "Erro ao alternar provider.");
                 throw;
             }
         }
@@ -99,7 +97,7 @@ namespace ClinicaMedica.Web.Services
         {
             var providers = new List<DatabaseProviderInfo>
             {
-                new DatabaseProviderInfo
+                new()
                 {
                     Name = "MySql",
                     DisplayName = "MySQL",
@@ -107,7 +105,7 @@ namespace ClinicaMedica.Web.Services
                     IsAvailable = true,
                     Icon = "fab fa-database"
                 },
-                new DatabaseProviderInfo
+                new()
                 {
                     Name = "Oracle",
                     DisplayName = "Oracle Database",
@@ -125,7 +123,7 @@ namespace ClinicaMedica.Web.Services
             try
             {
                 var provider = await GetCurrentProviderAsync();
-                var connectionStringName = provider == "Oracle" ? "OracleConnection" : "DefaultConnection";
+                var connectionStringName = GetConnectionStringName(provider);
                 var connectionString = _configuration.GetConnectionString(connectionStringName);
 
                 return new DatabaseConnectionInfo
@@ -138,7 +136,7 @@ namespace ClinicaMedica.Web.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao obter info de conexão: {ex.Message}");
+                _logger.LogError(ex, "Erro ao obter info de conexão.");
                 return new DatabaseConnectionInfo
                 {
                     Provider = "Desconhecido",
@@ -153,13 +151,14 @@ namespace ClinicaMedica.Web.Services
         {
             try
             {
-                var connectionStringName = provider == "Oracle" ? "OracleConnection" : "DefaultConnection";
+                var normalizedProvider = NormalizeProvider(provider);
+                var connectionStringName = GetConnectionStringName(normalizedProvider);
                 var connectionString = _configuration.GetConnectionString(connectionStringName);
 
-                if (string.IsNullOrEmpty(connectionString))
+                if (string.IsNullOrWhiteSpace(connectionString))
                     return false;
 
-                if (provider == "Oracle")
+                if (normalizedProvider == DatabaseProvider.Oracle.ToString())
                 {
                     using var connection = new Oracle.ManagedDataAccess.Client.OracleConnection(connectionString);
                     await connection.OpenAsync();
@@ -172,19 +171,33 @@ namespace ClinicaMedica.Web.Services
                     connection.Close();
                 }
 
-                _logger.LogInformation($"✅ Conexão com {provider} testada com sucesso");
+                _logger.LogInformation("Conexão com {Provider} testada com sucesso.", normalizedProvider);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"❌ Erro ao testar conexão com {provider}: {ex.Message}");
+                _logger.LogError(ex, "Erro ao testar conexão com {Provider}.", provider);
                 return false;
             }
         }
 
-        private bool IsValidProvider(string provider)
+        private static bool IsValidProvider(string provider)
         {
-            return provider == "MySql" || provider == "Oracle";
+            return Enum.TryParse<DatabaseProvider>(provider, true, out _);
+        }
+
+        private static string NormalizeProvider(string? provider)
+        {
+            return Enum.TryParse<DatabaseProvider>(provider, true, out var parsed)
+                ? parsed.ToString()
+                : DatabaseProvider.MySql.ToString();
+        }
+
+        private static string GetConnectionStringName(string provider)
+        {
+            return Enum.TryParse<DatabaseProvider>(provider, true, out var parsed) && parsed == DatabaseProvider.Oracle
+                ? "OracleConnection"
+                : "MySqlConnection";
         }
 
         private string MaskConnectionString(string? connectionString)

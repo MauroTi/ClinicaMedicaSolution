@@ -1,4 +1,4 @@
-﻿using ClinicaMedica.Web.Services.Interfaces;
+using ClinicaMedica.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicaMedica.Web.Controllers.Api
@@ -14,11 +14,10 @@ namespace ClinicaMedica.Web.Controllers.Api
             _dashboardService = dashboardService;
         }
 
-        // GET: api/Dashboard
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            var resumo = _dashboardService.ObterResumo();
+            var resumo = await _dashboardService.ObterResumoAsync();
             return Ok(resumo);
         }
     }

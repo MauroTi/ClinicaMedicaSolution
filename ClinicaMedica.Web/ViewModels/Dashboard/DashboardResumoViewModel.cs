@@ -1,4 +1,4 @@
-﻿namespace ClinicaMedica.Web.ViewModels.Dashboard
+namespace ClinicaMedica.Web.ViewModels.Dashboard
 {
     public class DashboardResumoViewModel
     {
@@ -6,6 +6,6 @@
         public int TotalMedicos { get; set; }
         public int TotalConsultas { get; set; }
         public decimal ReceitaTotal { get; internal set; }
-        public string ConsultasAgendadas { get; internal set; }
+        public string ConsultasAgendadas { get; internal set; } = string.Empty;
     }
 }

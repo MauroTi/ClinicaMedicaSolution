@@ -1,48 +1,30 @@
+using ClinicaMedica.Consumidor.Services;
+using ClinicaMedica.Consumidor.Services.Interfaces;
 using ClinicaMedica.Consumidor.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ClinicaMedica.Consumidor.Controllers
+namespace ClinicaMedica.Consumidor.Controllers;
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly IApiService _apiService;
+
+    public HomeController(IApiService apiService)
     {
-        private readonly IApiService _apiService;
+        _apiService = apiService;
+    }
 
-        public HomeController(IApiService apiService)
+    public async Task<IActionResult> Index()
+    {
+        try
         {
-            _apiService = apiService;
+            var model = await _apiService.GetAsync<HomeViewModel>(ApiEndpoints.Dashboard);
+            return View(model ?? new HomeViewModel());
         }
-
-        public async Task<IActionResult> Index()
+        catch (Exception ex)
         {
-            try
-            {
-                var database = HttpContext.Session.GetString("database") ?? "mysql";
-                _apiService.SetDatabase(database);
-
-                var totalMedicos = await _apiService.GetAllAsync<MedicoViewModel>("medicosApi");
-                var totalPacientes = await _apiService.GetAllAsync<PacienteViewModel>("pacientes");
-                var totalConsultas = await _apiService.GetAllAsync<ConsultaViewModel>("consultas");
-
-                var model = new HomeViewModel
-                {
-                    TotalMedicos = totalMedicos.Count,
-                    TotalPacientes = totalPacientes.Count,
-                    TotalConsultas = totalConsultas.Count
-                };
-
-                return View(model);
-            }
-            catch (Exception ex)
-            {
-                ViewData["ErroApi"] = ex.Message;
-
-                return View(new HomeViewModel
-                {
-                    TotalMedicos = 0,
-                    TotalPacientes = 0,
-                    TotalConsultas = 0
-                });
-            }
+            ViewData["ErroApi"] = ex.Message;
+            return View(new HomeViewModel());
         }
     }
 }

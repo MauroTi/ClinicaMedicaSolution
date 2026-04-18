@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicaMedica.Consumidor.Controllers;
 
-public class ConsultasController : Controller
+public class ConsultasController : ConsumerControllerBase
 {
     private const int PageSize = 10;
     private readonly IConsultaService _consultaService;
@@ -20,7 +20,7 @@ public class ConsultasController : Controller
         try
         {
             var consultas = await _consultaService.ObterTodosAsync();
-            var pagination = PaginationHelper.Create(page, consultas.Count, PageSize, HttpContext.Session.GetString("database"));
+            var pagination = CreatePagination(page, consultas.Count, PageSize);
 
             var model = new ConsultaIndexViewModel
             {
@@ -35,7 +35,7 @@ public class ConsultasController : Controller
             ViewData["ErroApi"] = $"Erro ao carregar consultas: {ex.Message}";
             return View(new ConsultaIndexViewModel
             {
-                Pagination = PaginationHelper.Create(1, 0, PageSize, HttpContext.Session.GetString("database"))
+                Pagination = CreatePagination(1, 0, PageSize)
             });
         }
     }
@@ -47,17 +47,13 @@ public class ConsultasController : Controller
             var consulta = await _consultaService.ObterPorIdAsync(id);
 
             if (consulta == null)
-            {
-                TempData["Erro"] = "Consulta não encontrada.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Consulta não encontrada.");
 
             return View(consulta);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar detalhes da consulta: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar detalhes da consulta: {ex.Message}");
         }
     }
 
@@ -108,7 +104,7 @@ public class ConsultasController : Controller
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, $"Erro ao cadastrar consulta: {ex.Message}");
+            AddUnexpectedModelError("Erro ao cadastrar consulta", ex);
         }
 
         await _consultaService.PreencherListasAsync(model);
@@ -122,18 +118,14 @@ public class ConsultasController : Controller
             var consulta = await _consultaService.ObterPorIdAsync(id);
 
             if (consulta == null)
-            {
-                TempData["Erro"] = "Consulta não encontrada.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Consulta não encontrada.");
 
             await _consultaService.PreencherListasAsync(consulta);
             return View(consulta);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar consulta para edição: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar consulta para edição: {ex.Message}");
         }
     }
 
@@ -142,10 +134,7 @@ public class ConsultasController : Controller
     public async Task<IActionResult> Edit(int id, ConsultaViewModel model)
     {
         if (id != model.Id)
-        {
-            TempData["Erro"] = "ID inválido.";
-            return RedirectToAction(nameof(Index));
-        }
+            return RedirectToIndexWithError("ID inválido.");
 
         if (!ModelState.IsValid)
         {
@@ -158,10 +147,7 @@ public class ConsultasController : Controller
             var existente = await _consultaService.ObterPorIdAsync(id);
 
             if (existente == null)
-            {
-                TempData["Erro"] = "Consulta não encontrada.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Consulta não encontrada.");
 
             model.DataCadastro = existente.DataCadastro;
 
@@ -177,7 +163,7 @@ public class ConsultasController : Controller
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError(string.Empty, $"Erro ao atualizar consulta: {ex.Message}");
+            AddUnexpectedModelError("Erro ao atualizar consulta", ex);
         }
 
         await _consultaService.PreencherListasAsync(model);
@@ -191,17 +177,13 @@ public class ConsultasController : Controller
             var consulta = await _consultaService.ObterPorIdAsync(id);
 
             if (consulta == null)
-            {
-                TempData["Erro"] = "Consulta não encontrada.";
-                return RedirectToAction(nameof(Index));
-            }
+                return RedirectToIndexWithError("Consulta não encontrada.");
 
             return View(consulta);
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar consulta para exclusão: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar consulta para exclusão: {ex.Message}");
         }
     }
 
@@ -239,8 +221,7 @@ public class ConsultasController : Controller
         }
         catch (Exception ex)
         {
-            TempData["Erro"] = $"Erro ao carregar gráfico: {ex.Message}";
-            return RedirectToAction(nameof(Index));
+            return RedirectToIndexWithError($"Erro ao carregar gráfico: {ex.Message}");
         }
     }
 }

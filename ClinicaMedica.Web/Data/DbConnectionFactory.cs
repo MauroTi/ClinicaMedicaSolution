@@ -25,7 +25,6 @@ namespace ClinicaMedica.Web.Data
             _logger = logger;
         }
 
-        // 🔥 COMPATIBILIDADE (mantido)
         public bool IsOracle => GetCurrentProvider() == DatabaseProvider.Oracle;
         public bool IsMySql => GetCurrentProvider() == DatabaseProvider.MySql;
 
@@ -68,7 +67,6 @@ namespace ClinicaMedica.Web.Data
             return provider.CreateConnection(connectionString);
         }
 
-        // 🔥 RESTAURADO (resolve seus erros)
         public IDbConnection CreateOpenConnection()
         {
             var connection = CreateConnection();

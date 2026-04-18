@@ -40,6 +40,9 @@ namespace ClinicaMedica.Web.Services
 
         public async Task<int> InserirAsync(Consulta consulta)
         {
+            if (consulta.DataCadastro == default)
+                consulta.DataCadastro = DateTime.Now;
+
             return await _consultaDao.InserirAsync(consulta);
         }
 
